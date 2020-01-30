@@ -2,6 +2,7 @@
 import tracecmd
 import pandas as pd
 import logging
+import os
 
 CAST = {
     'long' : int,
@@ -37,15 +38,17 @@ def event_to_dict(event):
     })
     return ret
 
-def main(trace_path, df_path):
+def main(trace_path, hdf_path):
     df = DataFrames_from(trace_path)
-    for k in df:
-        print(df[k])
-    DataFrames_to(df, df_path)
+    DataFrames_to_hdf(df, hdf_path)
 
-def DataFrames_to(df, df_path):
-    # TODO
-    pass
+def DataFrames_to_hdf(df, hdf_path):
+    if os.path.exists(hdf_path):
+        logging.info('Overwriting %s' % hdf_path)
+        os.remove(hdf_path)
+    for k in df:
+        logging.info('Saving %s' % k)
+        df[k].to_hdf(hdf_path, key=k, mode='a')
 
 def DataFrames_from(trace_path):
     df = {
@@ -81,4 +84,4 @@ if __name__ == '__main__':
     import sys
     # trace_path = sys.argv
     logging.basicConfig(level=logging.DEBUG)
-    main("trace.dat","trace.pandas")
+    main("trace.dat","trace.h5")
