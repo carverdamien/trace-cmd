@@ -102,9 +102,14 @@ if __name__ == '__main__':
     if not os.path.exists(args.trace_path):
         logging.error('Cannot find %s' % args.trace_path)
         sys.exit(1)
-    if os.path.exists(args.hdf_path) and not args.force:
-        logging.error('File %s exists' % args.hdf_path)
-        sys.exit(1)
+    if not args.force:
+        if os.path.splitext(args.trace_path)[1] != '.dat':
+            logging.warn('trace_path extension should be .dat')
+        if os.path.splitext(args.hdf_path)[1] != '.h5':
+            logging.warn('hfd_path extension should be .h5')
+        if os.path.exists(args.hdf_path):
+            logging.error('File %s exists' % args.hdf_path)
+            sys.exit(1)
     main(args.trace_path,
          args.hdf_path,
     )
