@@ -81,7 +81,30 @@ def DataDict_from(trace_path):
     return datadict
 
 if __name__ == '__main__':
-    import sys
-    # trace_path = sys.argv
+    import argparse, sys
+    parser = argparse.ArgumentParser(
+        description="Converts a trace-cmd record file into pandas dataframes and save them.",
+    )
+    parser.add_argument("trace_path",
+                        type=str,
+                        help="path to the trace-cmd record input file",
+    )
+    parser.add_argument("hdf_path",
+                        type=str,
+                        help="path to the pandas dataframes output file",
+    )
+    parser.add_argument("--force","-f",
+                        action="store_true",
+                        help="overwrites output file if it already exists",
+    )
+    args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
-    main("trace.dat","trace.h5")
+    if not os.path.exists(args.trace_path):
+        logging.error('Cannot find %s' % args.trace_path)
+        sys.exit(1)
+    if os.path.exists(args.hdf_path) and not args.force:
+        logging.error('File %s exists' % args.hdf_path)
+        sys.exit(1)
+    main(args.trace_path,
+         args.hdf_path,
+    )
