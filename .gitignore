@@ -3,6 +3,7 @@ trace-cmd
 *.so
 *.a
 *.dat
+*.h5
 *.patch
 .*.d
 *~
