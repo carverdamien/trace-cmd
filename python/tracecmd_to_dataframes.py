@@ -85,13 +85,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Converts a trace-cmd record file into pandas dataframes and save them.",
     )
-    parser.add_argument("trace_path",
-                        type=str,
-                        help="path to the trace-cmd record input file",
-    )
     parser.add_argument("hdf_path",
                         type=str,
                         help="path to the pandas dataframes output file",
+    )
+    parser.add_argument("trace_path",
+                        type=str,
+                        help="path to the trace-cmd record input file",
     )
     parser.add_argument("--force","-f",
                         action="store_true",
