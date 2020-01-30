@@ -1,4 +1,4 @@
-def rqsize(df):
+def sched_rq_size_interval(df):
     import numpy as np
     df = df['/sched_rq_size_change']
     size = np.array(df['size'])
@@ -14,6 +14,6 @@ def rqsize(df):
         'x0' : timestamp,
         'x1' : next_timestamp_on_same_cpu,
         'y0' : cpu,
-        'y1' : cpu + 0.5,
+        'y1' : cpu,
         'size' : size,
     }
