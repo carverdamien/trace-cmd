@@ -2,7 +2,7 @@
 import pandas as pd
 import logging
 import os
-from tracecmd_to_dataframes import DataFrames_to_hdf
+from Trace_to_DataFrames import DataFrames_to_hdf
 
 def Shapes_from(shape_path):
     logging.info('Reading %s' % shape_path)
@@ -24,6 +24,14 @@ def Shapes_from(shape_path):
         assert callable(v)
     return SHAPES
 
+def DataFrames_to_Image(df, shapes):
+    image = {}
+    # TODO: in parallel
+    for name, func in shapes:
+        logging.info('Building %s' % name)
+        image[name] = pd.DataFrame(func(df))
+    return image
+
 def main(image_path, data_path, shape_paths):
     shapes = []
     for shape_path in shape_paths:
@@ -41,11 +49,7 @@ def main(image_path, data_path, shape_paths):
             k:store[k]
             for k in store.keys()
         }
-        image = {}
-        # TODO: in parallel
-        for name, func in shapes:
-            logging.info('Building %s' % name)
-            image[name] = pd.DataFrame(func(df))
+        image = DataFrames_to_Image(df, shapes)
         DataFrames_to_hdf(image, image_path)
     pass
 
