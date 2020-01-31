@@ -3,3 +3,4 @@ datashader
 jupyter
 seaborn
 tables
+ipympl
