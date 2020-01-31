@@ -38,9 +38,10 @@ def event_to_dict(event):
     })
     return ret
 
-def main(trace_path, hdf_path):
+def Trace_to_DataFrames(trace_path, hdf_path):
     df = DataFrames_from(trace_path)
     DataFrames_to_hdf(df, hdf_path)
+    return df
 
 def DataFrames_to_hdf(df, hdf_path):
     if os.path.exists(hdf_path):
@@ -110,6 +111,6 @@ if __name__ == '__main__':
         if os.path.exists(args.hdf_path):
             logging.error('File %s exists' % args.hdf_path)
             sys.exit(1)
-    main(args.trace_path,
+    Trace_to_DataFrames(args.trace_path,
          args.hdf_path,
     )

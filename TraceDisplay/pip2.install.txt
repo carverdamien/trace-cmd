@@ -2,3 +2,4 @@ pandas
 datashader
 jupyter
 seaborn
+tables
