@@ -1,3 +1,3 @@
 from DataFrameCollection import DataFrameCollection
 from Trace import Trace
-from DataFrames_to_Image import DataFrames_to_Image
+from Image import Image, Shapes_from
