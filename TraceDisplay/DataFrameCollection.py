@@ -2,11 +2,14 @@ import pandas as pd
 import os
 import logging
 
+class FileExtensionError(Exception):
+    pass
+
 class DataFrameCollection(object):
     def __init__(self,dict_of_data_frames={}):
-        assert isinstace(dict_of_data_frames, dict)
+        assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames:
-            assert isinstace(v, pd.DataFrame)
+            assert isinstance(v, pd.DataFrame)
         self.__df = dict_of_data_frames
 
     def __getitem__(self, k):
@@ -16,6 +19,8 @@ class DataFrameCollection(object):
         return self.__df.keys()
 
     def save(self, hdf_path):
+        if os.path.splitext(hdf_path)[1] != '.h5':
+            raise FileExtensionError()
         if os.path.exists(hdf_path):
             logging.info('Overwriting %s' % hdf_path)
             os.remove(hdf_path)
@@ -24,6 +29,8 @@ class DataFrameCollection(object):
             v.to_hdf(hdf_path, key=k, mode='a')
 
     def load(self, hdf_path):
+        if os.path.splitext(hdf_path)[1] != '.h5':
+            raise FileExtensionError()
         with pd.HDFStore(hdf_path) as store:
             logging.info('Loading %s' % hdf_path)
             df = {}
