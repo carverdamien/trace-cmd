@@ -5,12 +5,15 @@ import pandas as pd
 import logging
 
 class Trace(DataFrameCollection):
+    def __init__(self, *args, **kwargs):
+        super(Trace, self).__init__(*args, **kwargs)
     def load(self, path):
         if os.path.splitext(path)[1] == '.h5':
-            super(self).load(path)
+            super(Trace, self).load(path)
             # TODO: raise exception if DataFrameCollection is not a Trace
-            for k,v in self.__df.items():
+            for k,v in self.df.items():
                 assert v.index.name == 'timestamp'
+            return
         elif os.path.splitext(path)[1] != '.dat':
             raise FileExtensionError()
         df = {}
@@ -31,7 +34,7 @@ class Trace(DataFrameCollection):
             df[event] = pd.DataFrame(df[event])
             df[event].set_index('timestamp', inplace=True)
             df[event].sort_index(inplace=True, ascending=True)
-        self.__df = df
+        self.df = df
 
 CAST = {
     'long' : int,

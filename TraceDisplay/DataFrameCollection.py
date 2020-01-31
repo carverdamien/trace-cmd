@@ -10,13 +10,16 @@ class DataFrameCollection(object):
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames:
             assert isinstance(v, pd.DataFrame)
-        self.__df = dict_of_data_frames
+        self.df = dict_of_data_frames
 
     def __getitem__(self, k):
-        return self.__df[k]
+        kk = '/'+str(k)
+        if k not in self.df and kk in self.df:
+            k = kk
+        return self.df[k]
 
     def keys(self):
-        return self.__df.keys()
+        return self.df.keys()
 
     def save(self, hdf_path):
         if os.path.splitext(hdf_path)[1] != '.h5':
@@ -24,7 +27,9 @@ class DataFrameCollection(object):
         if os.path.exists(hdf_path):
             logging.info('Overwriting %s' % hdf_path)
             os.remove(hdf_path)
-        for k,v in self.__df.items():
+        if len(self.df) == 0:
+            logging.warn('Will not save empty DataFrameCollection')
+        for k,v in self.df.items():
             logging.info('Saving %s' % k)
             v.to_hdf(hdf_path, key=k, mode='a')
 
@@ -37,4 +42,4 @@ class DataFrameCollection(object):
             for k in store.keys():
                 logging.info('Loading %s' % k)
                 df[k] = store[k]
-            self.__df = df
+            self.df = df

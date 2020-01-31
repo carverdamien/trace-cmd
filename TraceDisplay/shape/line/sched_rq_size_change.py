@@ -1,6 +1,6 @@
 def sched_rq_size_change(df):
     import numpy as np
-    df = df['/sched_rq_size_change']
+    df = df['sched_rq_size_change']
     size = np.array(df['size'])
     timestamp = np.array(df.index)
     cpu = np.array(df['cpu'])
