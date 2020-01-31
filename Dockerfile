@@ -17,8 +17,8 @@ COPY COPYING COPYING.LIB DCO features.mk LICENSES Makefile README ./
 RUN make \
 &&  make install_python \
 &&  cp -vn /usr/local/lib/trace-cmd/python/* /usr/local/lib/python2.7/
-COPY trace-display/pip2.install.txt trace-display/pip2.install.txt
-RUN pip2 install -r trace-display/pip2.install.txt
-COPY trace-display trace-display
-ENTRYPOINT [ "trace-display/entrypoint.sh" ]
+COPY TraceDisplay/pip2.install.txt TraceDisplay/pip2.install.txt
+RUN pip2 install -r TraceDisplay/pip2.install.txt
+COPY TraceDisplay TraceDisplay
+ENTRYPOINT [ "TraceDisplay/entrypoint.sh" ]
 EXPOSE 443

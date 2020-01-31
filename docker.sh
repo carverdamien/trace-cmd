@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e -x
-img=trace-display
+img=tracedisplay
 docker build -t ${img} .
 docker run --rm \
-       -v ${ROOT:=$PWD}/trace-display/examples:/home/server/trace-display/examples:ro \
-       -v ${ROOT:=$PWD}/trace-display/examples/notebook:/home/server/trace-display/examples/notebook \
+       -v ${ROOT:=$PWD}/TraceDisplay/examples:/home/server/TraceDisplay/examples:ro \
+       -v ${ROOT:=$PWD}/TraceDisplay/examples/notebook:/home/server/TraceDisplay/examples/notebook \
        -p ${PORT:=443}:443 \
        ${img}
