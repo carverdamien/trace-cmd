@@ -24,6 +24,7 @@ class Trace(DataFrameCollection):
             event = trace.read_event(cpu)
             while event:
                 event = event_to_dict(event)
+                # TODO: Maybe del event['event']
                 df.setdefault(event['event'],[]).append(event)
                 event = trace.read_event(cpu)
         logging.info('%s contains %d types of events' %
@@ -32,6 +33,8 @@ class Trace(DataFrameCollection):
         for event in df:
             logging.info('Building DataFrame of event %s' % event)
             df[event] = pd.DataFrame(df[event])
+            # TODO: check if timestamps are unique
+            # because two cpu can produce the same timestamp
             df[event].set_index('timestamp', inplace=True)
             df[event].sort_index(inplace=True, ascending=True)
         self.df = df
