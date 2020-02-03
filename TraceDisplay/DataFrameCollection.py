@@ -18,6 +18,28 @@ class DataFrameCollection(object):
             k = kk
         return self.df[k]
 
+    def __setitem__(self, k, v):
+        assert isinstance(v, pd.DataFrame)
+        self.df[k] = v
+
+    def __len__(self):
+        return len(self.df)
+
+    def __delitem__(self, k):
+        del self.df[k]
+
+    def __iter__(self):
+        return iter(self.df)
+
+    def __contains__(self, v):
+        return v in self.df
+
+    def values(self):
+        return self.df.values()
+
+    def items(self):
+        return self.df.items()
+
     def keys(self):
         return self.df.keys()
 
