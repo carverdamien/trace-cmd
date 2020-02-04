@@ -38,6 +38,9 @@ class Trace(DataFrameCollection):
             df[event].set_index('timestamp', inplace=True)
             df[event].sort_index(inplace=True, ascending=True)
         self.df = df
+    def timeline(self, timestamp=0, size=10):
+        timeline = pd.DataFrame({})
+        return timeline
 
 def try_str_except_int(x):
     try:
