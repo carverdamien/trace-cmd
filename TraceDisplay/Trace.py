@@ -42,6 +42,8 @@ class Trace(DataFrameCollection):
 def try_str_except_int(x):
     try:
         return str(x)
+    except UnicodeEncodeError as e:
+        return int(x)
     except UnicodeDecodeError as e:
         return int(x)
 
