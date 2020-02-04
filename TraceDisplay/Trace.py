@@ -39,7 +39,33 @@ class Trace(DataFrameCollection):
             df[event].sort_index(inplace=True, ascending=True)
         self.df = df
     def timeline(self, timestamp=0, size=10):
-        timeline = pd.DataFrame({})
+        assert size > 0
+        def select(v):
+            i = v.index.searchsorted(timestamp)
+            imin = max(0, i - size)
+            imax = min(len(v), i + size+1)
+            return v.iloc[imin:imax]
+        timeline = {
+            k : select(v)
+            for k,v in self.items()
+        }
+        ppd = str
+        def ppd(d):
+            return ",".join(["%s=%s"%(k,v) for k,v in sorted(d.items(), key=lambda x:str(x[0]))])
+        timeline = pd.concat([
+            pd.DataFrame({
+                'timestamp' : v.index.values,
+                'event' : v['event'].values,
+                'data' : [ppd({r:v.iloc[i][r] for r in v.iloc[i].index}) for i in range(len(v))],
+            })
+            for k,v in timeline.items()
+        ])
+        timeline.set_index('timestamp', inplace=True)
+        timeline.sort_index(inplace=True, ascending=True)
+        i = timeline.index.searchsorted(timestamp)
+        imin = max(0, i - size)
+        imax = min(len(timeline), i + size+1)
+        timeline = timeline.iloc[imin:imax]
         return timeline
 
 def try_str_except_int(x):
