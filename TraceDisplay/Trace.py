@@ -39,11 +39,21 @@ class Trace(DataFrameCollection):
             df[event].sort_index(inplace=True, ascending=True)
         self.df = df
 
+def try_str_except_int(x):
+    try:
+        return str(x)
+    except UnicodeDecodeError as e:
+        return int(x)
+
 CAST = {
     'long' : int,
     'u64' : int,
     'int' : int,
+    'unsigned int' : int,
     'pid_t' : int,
+    'size_t' : int,
+    'const char *' : try_str_except_int,
+    'char *' : try_str_except_int,
     'char[16]' : str,
     '__data_loc char[]' : str,
 }
