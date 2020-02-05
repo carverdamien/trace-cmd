@@ -42,7 +42,8 @@ class Color(object):
         for k,v in self.query.items():
             assert isinstance(df[k], pd.DataFrame)
             if v:
-                df[k].query(v)['color'] = self.category
+                result = df[k].eval(v)
+                df[k].loc[result,['color']] = self.category
             else:
                 df[k]['color'] = self.category
 
