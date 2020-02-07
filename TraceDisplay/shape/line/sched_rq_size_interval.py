@@ -1,10 +1,10 @@
 def sched_rq_size_interval(df):
     import numpy as np
     df = df['sched_rq_size_change']
-    size = np.array(df['size'])
     timestamp = np.array(df.index, dtype=float)
     next_timestamp_on_same_cpu = np.array(df.index, dtype=float)
-    cpu = np.array(df['cpu'], dtype=float)
+    rq_size = np.array(df['rq_size'])
+    cpu = np.array(df['rq_cpu'], dtype=float)
     idx = np.arange(len(next_timestamp_on_same_cpu))
     # TODO: in parallel
     for i in np.unique(cpu):
@@ -15,5 +15,5 @@ def sched_rq_size_interval(df):
         'x1' : next_timestamp_on_same_cpu,
         'y0' : cpu,
         'y1' : cpu,
-        'size' : size,
+        'rq_size' : rq_size,
     }
