@@ -65,6 +65,7 @@ class BokehRenderer(object):
         self.figure.y_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'y'))
         self.notebook_handle = None
         self.colored_image = None
+        self.image = None
         self.rendering = default_rendering
         self.source = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
         self.renderer = self.figure.image_rgba(source=self.source,
@@ -104,6 +105,7 @@ class BokehRenderer(object):
             return
         line, color_key = self.colored_image.get_line_and_color_key()
         image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
+        self.image = image
         self.source.data.update(dict(image=[image.data],
                                      x=[xmin],
                                      y=[ymin],
