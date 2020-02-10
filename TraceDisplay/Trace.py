@@ -103,3 +103,71 @@ def event_to_dict(event):
         for key in event.keys()
     })
     return ret
+
+"""
+import tracecmd
+import ctracecmd as c
+let e be any sched_switch event
+
+How do I get the meaning of e['prev_state']? i.e. {S,D,T,t,X,Z,P,I,R}{+,} ?
+
+The trace.dat file has a copy of /sys/kernel/debug/tracing/events/sched/sched_switch/format
+but I was not able to to get the 'print fmt' information from the python API.
+The answer is in lib/traceevent/event-parse.c (7Kloc), but for now I tried the following:
+
+fmt = c.tep_event_print_fmt_get(e._format)
+c.tep_print_fmt_format_get(fmt)
+'prev_comm=%s prev_pid=%d prev_prio=%d prev_state=%s%s ==> next_comm=%s next_pid=%d next_prio=%d'
+args = c.tep_print_fmt_args_get(fmt)
+arg_field = c.tep_print_arg_field_get(args)
+c.tep_print_arg_field_name_get(arg_field)
+'prev_comm'
+args = c.tep_print_arg_next_get(args)
+arg_field = c.tep_print_arg_field_get(args)
+c.tep_print_arg_field_name_get(arg_field)
+'prev_pid'
+args = c.tep_print_arg_next_get(args)
+arg_field = c.tep_print_arg_field_get(args)
+c.tep_print_arg_field_name_get(arg_field)
+'prev_prio'
+args = c.tep_print_arg_next_get(args)
+arg_field = c.tep_print_arg_field_get(args)
+c.tep_print_arg_field_name_get(arg_field)
+'?'
+args = c.tep_print_arg_next_get(args)
+arg_field = c.tep_print_arg_field_get(args)
+c.tep_print_arg_field_name_get(arg_field)
+'?'
+args = c.tep_print_arg_next_get(args)
+arg_field = c.tep_print_arg_field_get(args)
+c.tep_print_arg_field_name_get(arg_field)
+'next_comm'
+args = c.tep_print_arg_next_get(args)
+arg_field = c.tep_print_arg_field_get(args)
+c.tep_print_arg_field_name_get(arg_field)
+'next_pid'
+args = c.tep_print_arg_next_get(args)
+arg_field = c.tep_print_arg_field_get(args)
+c.tep_print_arg_field_name_get(arg_field)
+'next_prio'
+"""
+
+"""
+name: sched_switch
+ID: 316
+format:
+        field:unsigned short common_type;       offset:0;       size:2; signed:0;
+        field:unsigned char common_flags;       offset:2;       size:1; signed:0;
+        field:unsigned char common_preempt_count;       offset:3;       size:1; signed:0;
+        field:int common_pid;   offset:4;       size:4; signed:1;
+
+        field:char prev_comm[16];       offset:8;       size:16;        signed:1;
+        field:pid_t prev_pid;   offset:24;      size:4; signed:1;
+        field:int prev_prio;    offset:28;      size:4; signed:1;
+        field:long prev_state;  offset:32;      size:8; signed:1;
+        field:char next_comm[16];       offset:40;      size:16;        signed:1;
+        field:pid_t next_pid;   offset:56;      size:4; signed:1;
+        field:int next_prio;    offset:60;      size:4; signed:1;
+
+print fmt: "prev_comm=%s prev_pid=%d prev_prio=%d prev_state=%s%s ==> next_comm=%s next_pid=%d next_prio=%d", REC->prev_comm, REC->prev_pid, REC->prev_prio, (REC->prev_state & ((((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) - 1)) ? __print_flags(REC->prev_state & ((((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) - 1), "|", { 0x0001, "S" }, { 0x0002, "D" }, { 0x0004, "T" }, { 0x0008, "t" }, { 0x0010, "X" }, { 0x0020, "Z" }, { 0x0040, "P" }, { 0x0080, "I" }) : "R", REC->prev_state & (((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) ? "+" : "", REC->next_comm, REC->next_pid, REC->next_prio
+"""
