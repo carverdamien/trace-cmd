@@ -102,6 +102,8 @@ def event_to_dict(event):
         key:CAST[typeof(key,event)](event[str(key)])
         for key in event.keys()
     })
+    if ret['event'] in EXTRA:
+        ret = EXTRA[ret['event']](ret)
     return ret
 
 """
@@ -197,3 +199,12 @@ def print_prev_state(prev_state):
     else:
         r += ""
     return r
+
+def extra_sched_switch(e):
+    if 'prev_state' in e:
+        e['prev_state'] = print_prev_state(e['prev_state'])
+    return e
+
+EXTRA = {
+    'sched_switch' : extra_sched_switch,
+}
