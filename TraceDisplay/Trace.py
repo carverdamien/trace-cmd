@@ -171,3 +171,29 @@ format:
 
 print fmt: "prev_comm=%s prev_pid=%d prev_prio=%d prev_state=%s%s ==> next_comm=%s next_pid=%d next_prio=%d", REC->prev_comm, REC->prev_pid, REC->prev_prio, (REC->prev_state & ((((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) - 1)) ? __print_flags(REC->prev_state & ((((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) - 1), "|", { 0x0001, "S" }, { 0x0002, "D" }, { 0x0004, "T" }, { 0x0008, "t" }, { 0x0010, "X" }, { 0x0020, "Z" }, { 0x0040, "P" }, { 0x0080, "I" }) : "R", REC->prev_state & (((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) ? "+" : "", REC->next_comm, REC->next_pid, REC->next_prio
 """
+
+# TODO: do not use this function, use functions of ctracecmd
+def print_prev_state(prev_state):
+    def __print_flags(flag, delim, flag_array):
+        return delim.join([f[1] for f in filter(lambda f: f[0] & flag, flag_array)])
+    if prev_state & ((((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) - 1):
+        flag = prev_state & ((((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) - 1)
+        delim = "|"
+        flag_array = [
+            ( 0x0001, "S" ),
+            ( 0x0002, "D" ),
+            ( 0x0004, "T" ),
+            ( 0x0008, "t" ),
+            ( 0x0010, "X" ),
+            ( 0x0020, "Z" ),
+            ( 0x0040, "P" ),
+            ( 0x0080, "I" ),
+        ]
+        r = __print_flags(flag, delim, flag_array)
+    else:
+        r = "R"
+    if prev_state & (((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1):
+        r += "+"
+    else:
+        r += ""
+    return r
