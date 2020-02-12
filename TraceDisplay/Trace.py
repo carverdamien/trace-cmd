@@ -39,7 +39,7 @@ class Trace(DataFrameCollection):
             df[event].sort_index(inplace=True, ascending=True)
         self.df = df
         print_warning(self, path)
-    def timeline(self, timestamp=0, size=10):
+    def timeline(self, timestamp=0, size=10, tmin=None, tmax=None):
         assert size > 0
         def select(v):
             i = v.index.searchsorted(timestamp)
@@ -56,6 +56,10 @@ class Trace(DataFrameCollection):
         imin = max(0, i - size)
         imax = min(len(timeline), i + size+1)
         timeline = timeline.iloc[imin:imax]
+        if tmin:
+            timeline = timeline[timeline.index > tmin]
+        if tmax:
+            timeline = timeline[timeline.index < tmax]
         timeline = timeline.dropna(how='all', axis=1)
         return timeline
 
