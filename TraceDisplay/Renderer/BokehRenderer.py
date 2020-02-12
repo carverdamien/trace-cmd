@@ -76,6 +76,7 @@ class BokehRenderer(object):
                                                dh='dh',
                                                dilate=False,
         )
+        self.notify_update = []
 
     def reset_ranges(self):
         ci = self.colored_image
@@ -130,6 +131,12 @@ class BokehRenderer(object):
         print(self.figure.y_range.start, self.figure.y_range.end)
         self.updateImage()
         push_notebook(handle=self.notebook_handle)
+        for func in self.notify_update:
+            func(self.figure.x_range.start,
+                 self.figure.x_range.end,
+                 self.figure.y_range.start,
+                 self.figure.y_range.end,
+            )
         pass
 
     def show(self):
