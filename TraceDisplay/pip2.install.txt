@@ -1,6 +1,11 @@
-pandas
-datashader
-jupyter
-seaborn
-tables
-ipympl
+prompt-toolkit==1.0.15
+ipython==4.2.1
+pandas==0.24.2
+datashader==0.10.0
+jupyter==1.0.0
+jupyter-client==5.3.4
+jupyter-console==5.2.0
+jupyter-core==4.6.2
+seaborn==0.9.1
+tables==3.5.2
+py2neo==4.2.0
