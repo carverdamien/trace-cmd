@@ -7,7 +7,7 @@ docker build -t ${img} .
 docker run --name neo4j \
        --rm -d \
        ${PUBLISH_NEO4J} \
-       neo4j
+       neo4j:4.0.0
 docker run --name ${img} \
        --link neo4j \
        --rm -d \
