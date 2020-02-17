@@ -38,6 +38,7 @@ class Graph(object):
             for j in chains[k]
             for i in range(1,len(chains[k][j]))
         ]
+        edge += build_additionnal_edges(node, per_pid)
         self._node = node
         self._edge = edge
         return
@@ -106,3 +107,100 @@ class Graph(object):
             tx.create(edge)
             commit(tx)
         single_commit(tx)
+
+def build_additionnal_edges(node, per_pid):
+    import bisect
+    # assert per_pid sorted by timestamp
+    block = {
+        # wakeup_target_pid : [ block_node_idx, ] # Array sorted by timestamp
+    }
+    running = {
+        # wakeup_target_pid : [ running_node_idx, ] # Array sorted by timestamp
+    }
+    wake_up = {
+        # wakeup_target_pid : [ wakeup_node_idx, ] # Array sorted by timestamp
+    }
+    wake_up_new = {
+        # wakeup_target_pid : wakeupnew_node_idx
+    }
+    first_unblock = {
+        # wakeup_target_pid : first_unblock_node_idx
+    }
+    # TODO:
+    # last_block = {
+        # wakeup_target_pid : last_block_node_idx
+    # }
+    def sched_switch(i):
+        next_pid   = node[i][1]['next_pid']
+        prev_pid   = node[i][1]['prev_pid']
+        prev_state = node[i][1]['prev_state']
+        if prev_state in ['S', 'D']: # INTERRUPTIBLE or UNINTERRUPTIBLE
+            block.setdefault(prev_pid, []).append(i)
+        # TODO:
+        # elif prev_state in ['X', 'Z', 'I']: # EXIT_DEAD, EXIT_ZOMBIE, TASK_DEAD
+        #     last_block[prev_pid] = i
+        running.setdefault(next_pid, []).append(i)
+        first_unblock.setdefault(next_pid, i)
+        pass
+    def sched_wakeup(i):
+        pid = node[i][1]['pid']
+        wake_up.setdefault(pid, []).append(i)
+        pass
+    def sched_wakeup_new(i):
+        pid = node[i][1]['pid']
+        if pid in wake_up_new:
+            raise Exception()
+        wake_up_new[pid] = i
+        pass
+    filtering = {
+        'sched_switch'     : sched_switch,
+        'sched_wakeup'     : sched_wakeup,
+        'sched_wakeup_new' : sched_wakeup_new,
+    }
+    logging.info('Filtering')
+    for pid in per_pid: 
+        for i in per_pid[pid]:
+            n = node[i]
+            name = n[0]
+            if name in filtering:
+                filtering[name](i)
+    sort = {
+        'running': { 'data' : running, 'keys':{}},
+        'wake_up': { 'data' : wake_up, 'keys':{}},
+    }
+    logging.info('Sorting')
+    key = lambda n:node[n][1]['timestamp']
+    for k,v in sort.items():
+        for pid in v['data']:
+            v['data'][pid] = sorted(v['data'][pid], key=key)
+            v['keys'][pid] = [key(n) for n in v['data'][pid]]
+    def find_next_unblock(pid, b):
+        if pid not in sort['running']['keys']:
+            return None
+        i = bisect.bisect_right(sort['running']['keys'][pid], key(b))
+        if i == len(sort['running']['data'][pid]):
+            return None
+        return sort['running']['data'][pid][i]
+    def find_wake_up_between_block_and_unblock(pid, b, u):
+        imin = bisect.bisect_right(sort['wake_up']['keys'][pid], key(b))
+        imax = bisect.bisect_left(sort['wake_up']['keys'][pid], key(u))
+        for i in range(imin, imax):
+            yield sort['wake_up']['data'][pid][i]
+    def find_block_unblock_edges():
+        for pid in block:
+            for b in block[pid]:
+                u = find_next_unblock(pid, b)
+                if not u:
+                    logging.warn('Event not found: name==sched_switch, next_pid==%d' % pid)
+                    continue
+                for w in find_wake_up_between_block_and_unblock(pid, b, u):
+                    yield ('block', b, w)
+                    yield ('unblock', w, u)
+    block_unblock_edges = list(find_block_unblock_edges())
+    wake_up_new_edges = [
+        ('wake_up_new', wake_up_new[pid], first_unblock[pid])
+        for pid in wake_up_new
+    ]
+    logging.debug(len(wake_up_new_edges))
+    logging.debug(len(block_unblock_edges))
+    return wake_up_new_edges + block_unblock_edges
