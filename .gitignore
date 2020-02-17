@@ -4,6 +4,8 @@ trace-cmd
 *.a
 *.dat
 *.h5
+*.pkl
+*.tgz
 *.patch
 .*.d
 *~
