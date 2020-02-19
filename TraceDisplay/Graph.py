@@ -112,7 +112,7 @@ def build_additionnal_edges(node, per_pid):
     import bisect
     # assert per_pid sorted by timestamp
     block = {
-        # wakeup_target_pid : [ block_node_idx, ] # Array sorted by timestamp
+        # wakeup_target_pid : [ block_node_idx, ]
     }
     running = {
         # wakeup_target_pid : [ running_node_idx, ] # Array sorted by timestamp
@@ -123,13 +123,6 @@ def build_additionnal_edges(node, per_pid):
     wake_up_new = {
         # wakeup_target_pid : wakeupnew_node_idx
     }
-    first_unblock = {
-        # wakeup_target_pid : first_unblock_node_idx
-    }
-    # TODO:
-    # last_block = {
-        # wakeup_target_pid : last_block_node_idx
-    # }
     def sched_switch(i):
         next_pid   = node[i][1]['next_pid']
         prev_pid   = node[i][1]['prev_pid']
@@ -140,7 +133,6 @@ def build_additionnal_edges(node, per_pid):
         # elif prev_state in ['X', 'Z', 'I']: # EXIT_DEAD, EXIT_ZOMBIE, TASK_DEAD
         #     last_block[prev_pid] = i
         running.setdefault(next_pid, []).append(i)
-        first_unblock.setdefault(next_pid, i)
         pass
     def sched_wakeup(i):
         pid = node[i][1]['pid']
@@ -180,11 +172,20 @@ def build_additionnal_edges(node, per_pid):
         i = bisect.bisect_right(sort['running']['keys'][pid], key(b))
         if i == len(sort['running']['data'][pid]):
             return None
+        # assert key(b) != key(sort['running']['data'][pid][i])
+        # assert key(b) < key(sort['running']['data'][pid][i])
+        # assert i==0 or key(sort['running']['data'][pid][i-1]) < key(b)
         return sort['running']['data'][pid][i]
     def find_wake_up_between_block_and_unblock(pid, b, u):
         imin = bisect.bisect_right(sort['wake_up']['keys'][pid], key(b))
         imax = bisect.bisect_left(sort['wake_up']['keys'][pid], key(u))
+        # assert imin==0 or key(sort['wake_up']['data'][pid][imin-1]) < key(b)
+        # assert imax==len(sort['wake_up']['data'][pid]) or key(sort['wake_up']['data'][pid][imax]) > key(u)
         for i in range(imin, imax):
+            # assert key(b) != key(sort['wake_up']['data'][pid][i])
+            # assert key(b) < key(sort['wake_up']['data'][pid][i])
+            # assert key(u) != key(sort['wake_up']['data'][pid][i])
+            # assert key(u) > key(sort['wake_up']['data'][pid][i])
             yield sort['wake_up']['data'][pid][i]
     def find_block_unblock_edges():
         for pid in block:
@@ -194,11 +195,11 @@ def build_additionnal_edges(node, per_pid):
                     logging.warn('Event not found: name==sched_switch, next_pid==%d' % pid)
                     continue
                 for w in find_wake_up_between_block_and_unblock(pid, b, u):
-                    yield ('block', b, w)
-                    yield ('unblock', w, u)
+                    yield ('block', b, w, {})
+                    yield ('unblock', w, u, {})
     block_unblock_edges = list(find_block_unblock_edges())
     wake_up_new_edges = [
-        ('wake_up_new', wake_up_new[pid], first_unblock[pid])
+        ('wake_up_new', wake_up_new[pid], find_next_unblock(pid, wake_up_new[pid]), {})
         for pid in wake_up_new
     ]
     logging.debug(len(wake_up_new_edges))
