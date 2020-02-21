@@ -1,10 +1,10 @@
 PROFILE
 
 MATCH
-(woken:sched_switch)-[:block]->(waker:sched_wakeup)-[:unblock]->(:sched_switch)
+(woken:sched_switch)-[:block]->(waker:sched_wakeup)-[:unblock]->(unblock:sched_switch)
 
 RETURN
-DISTINCT([woken.common_pid, waker.common_pid]), COUNT(*) as wakeup_count
+DISTINCT([woken.common_pid, waker.common_pid]), COUNT(*) as wakeup_count, SUM(unblock.timestamp - woken.timestamp) as total_blocked_time
 ORDER BY wakeup_count DESC
 LIMIT 30
 ;
@@ -12,10 +12,10 @@ LIMIT 30
 PROFILE
 
 MATCH
-(woken:sched_switch)-[:block]->(waker:sched_wakeup)-[:unblock]->(:sched_switch)
+(woken:sched_switch)-[:block]->(waker:sched_wakeup)-[:unblock]->(unblock:sched_switch)
 
 RETURN
-DISTINCT([woken.common_pid, woken.common_comm, waker.common_pid, waker.common_comm]), COUNT(*) as wakeup_count
+DISTINCT([woken.common_pid, woken.common_comm, waker.common_pid, waker.common_comm]), COUNT(*) as wakeup_count, SUM(unblock.timestamp - woken.timestamp) as total_blocked_time
 ORDER BY wakeup_count DESC
 LIMIT 30
 ;
@@ -23,10 +23,10 @@ LIMIT 30
 PROFILE
 
 MATCH
-(woken:sched_switch)-[:block]->(waker:sched_wakeup)-[:unblock]->(:sched_switch)
+(woken:sched_switch)-[:block]->(waker:sched_wakeup)-[:unblock]->(unblock:sched_switch)
 
 RETURN
-DISTINCT([woken.common_pid, woken.common_comm, waker.common_pid, waker.common_comm]) as woken_waker, COUNT(*) as wakeup_count
+DISTINCT([woken.common_pid, woken.common_comm, waker.common_pid, waker.common_comm]) as woken_waker, COUNT(*) as wakeup_count, SUM(unblock.timestamp - woken.timestamp) as total_blocked_time
 ORDER BY wakeup_count DESC
 LIMIT 30
 ;
@@ -37,16 +37,16 @@ LIMIT 30
 PROFILE
 
 MATCH
-(woken:sched_switch)-[:block]->(waker:sched_wakeup)-[:unblock]->(:sched_switch)
+(woken:sched_switch)-[:block]->(waker:sched_wakeup)-[:unblock]->(unblock:sched_switch)
 
 WITH
-DISTINCT([woken.common_pid, woken.common_comm, waker.common_pid, waker.common_comm]) as woken_waker, COUNT(*) as wakeup_count
+DISTINCT([woken.common_pid, woken.common_comm, waker.common_pid, waker.common_comm]) as woken_waker, COUNT(*) as wakeup_count, SUM(unblock.timestamp - woken.timestamp) as total_blocked_time
 OPTIONAL MATCH
 (woken_exec:sched_process_exec)
 WHERE
 woken_exec.common_pid = woken_waker[0]
 
-WITH woken_waker, woken_exec, wakeup_count
+WITH woken_waker, woken_exec, wakeup_count, total_blocked_time
 OPTIONAL MATCH
 (waker_exec:sched_process_exec)
 WHERE
@@ -78,6 +78,8 @@ woken_waker[3]
 END
 as waker_comm,
 
-wakeup_count ORDER BY wakeup_count DESC
+wakeup_count,
+total_blocked_time
+ORDER BY wakeup_count DESC
 LIMIT 30
 ;
