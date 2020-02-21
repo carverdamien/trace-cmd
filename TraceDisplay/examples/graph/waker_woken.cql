@@ -5,7 +5,7 @@ MATCH
 
 RETURN
 DISTINCT([woken.common_pid, waker.common_pid]), COUNT(*) as wakeup_count, SUM(unblock.timestamp - woken.timestamp) as total_blocked_time
-ORDER BY wakeup_count DESC
+ORDER BY total_blocked_time DESC
 LIMIT 30
 ;
 
@@ -16,7 +16,7 @@ MATCH
 
 RETURN
 DISTINCT([woken.common_pid, woken.common_comm, waker.common_pid, waker.common_comm]), COUNT(*) as wakeup_count, SUM(unblock.timestamp - woken.timestamp) as total_blocked_time
-ORDER BY wakeup_count DESC
+ORDER BY total_blocked_time DESC
 LIMIT 30
 ;
 
@@ -27,7 +27,7 @@ MATCH
 
 RETURN
 DISTINCT([woken.common_pid, woken.common_comm, waker.common_pid, waker.common_comm]) as woken_waker, COUNT(*) as wakeup_count, SUM(unblock.timestamp - woken.timestamp) as total_blocked_time
-ORDER BY wakeup_count DESC
+ORDER BY total_blocked_time DESC
 LIMIT 30
 ;
 
@@ -80,6 +80,6 @@ as waker_comm,
 
 wakeup_count,
 total_blocked_time
-ORDER BY wakeup_count DESC
+ORDER BY total_blocked_time DESC
 LIMIT 30
 ;
