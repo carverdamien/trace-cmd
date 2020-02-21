@@ -13,24 +13,33 @@ class Graph(object):
         node = []
         per_pid = {}
         per_cpu = {}
+        per_switch = {}
+        # TODO: per_running = {}
+        switch = -1
         trace = tracecmd.Trace(path)
         for cpu in range(trace.cpus):
+            switch += 1
             logging.info('Reading events of cpu %d' % cpu)
             event = trace.read_event(cpu)
             while event:
                 event = event_to_dict(event)
+                name = event['event']
+                if name == 'sched_switch':
+                    switch += 1
                 pid = event['common_pid']
                 n = len(node)
-                node.append((event['event'], event))
+                node.append((name, event))
                 per_cpu.setdefault(cpu,[]).append(n)
                 per_pid.setdefault(pid,[]).append(n)
+                per_switch.setdefault(switch,[]).append(n)
                 event = trace.read_event(cpu)
         for pid in per_pid:
             logging.info('Sorting events per_pid[%d]' % pid)
             per_pid[pid] = sorted(per_pid[pid], key=lambda n:node[n][1]['timestamp'])
         chains = {
-            'per_pid' : per_pid,
-            'per_cpu' : per_cpu,
+            'per_pid'    : per_pid,
+            'per_cpu'    : per_cpu,
+            'per_switch' : per_switch,
         }
         edge = [
             (k, chains[k][j][i-1], chains[k][j][i], {})
