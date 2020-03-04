@@ -39,6 +39,7 @@ class Trace(DataFrameCollection):
             df[event].sort_index(inplace=True, ascending=True)
         self.df = df
         print_warning(self, path)
+        self.compute_sched_switch_latency()
     def timeline(self, timestamp=0, size=10, tmin=None, tmax=None):
         assert size > 0
         def select(v):
@@ -62,7 +63,81 @@ class Trace(DataFrameCollection):
             timeline = timeline[timeline.index < tmax]
         timeline = timeline.dropna(how='all', axis=1)
         return timeline
-
+    def compute_sched_switch_latency(self, force=True):
+        logging.info('compute_sched_switch_latency')
+        DEPENDENCIES = ['sched_switch', 'sched_wakeup', 'sched_wakeup_new']
+        for d in DEPENDENCIES:
+            if d not in self:
+                logging.info('key(%s) not in self'%(d))
+                logging.info('Cannot compute_sched_switch_latency')
+                return
+        if force:
+            for k in ['latency_value', 'latency_type']:
+                if k in self['sched_switch']:
+                    logging.info('key(%s) in self["sched_switch"]'%(k))
+                    logging.info('Cannot compute_sched_switch_latency')
+                    return
+        # Init with Nan
+        self['sched_switch']['latency_value'] = float('Nan')
+        self['sched_switch']['latency_type']  = ''
+        for i in range(len(self['sched_switch'])):
+            sched_switch = self['sched_switch'].iloc[i]
+            # pid is going to run
+            pid = sched_switch['next_pid']
+            # find previous sched_switch where prev_pid == pid
+            prev_sched_switch = self['sched_switch'].iloc[:i].query('prev_pid == %d '%(pid))
+            if len(prev_sched_switch) == 0:
+                # A) sched_switch follows a wakeup_new
+                # B) prev_sched_switch predates the recording
+                #
+                logging.warn('len(prev_sched_switch) == 0')
+                logging.debug('sched_switch=%s'%sched_switch)
+                # TODO
+                continue
+            # take last sched_switch
+            prev_sched_switch = prev_sched_switch.iloc[-1]
+            if prev_sched_switch['prev_state'] in ['R', 'R+']:
+                # 'R' means RUNNING
+                # 'R+' means RUNNING and preempt==True@schedule (Maybe)
+                # pid was preempted
+                # self['sched_switch']['latency_type'].iloc[i]  = 'P'
+                # self['sched_switch']['latency_value'].iloc[i] = sched_switch.name - prev_sched_switch.name
+                self['sched_switch'].at[sched_switch.name, 'latency_type']  = ' P'
+                self['sched_switch'].at[sched_switch.name, 'latency_value'] = sched_switch.name - prev_sched_switch.name
+                continue
+            elif prev_sched_switch['prev_state'] in ['S', 'D']:
+                # pid was wakeup
+                # find previous wakeup
+                sched_switch_time = sched_switch.name
+                sched_wakeup_idx  = self['sched_wakeup'].index.searchsorted(sched_switch_time)
+                prev_sched_wakeup = self['sched_wakeup'].iloc[:sched_wakeup_idx].query('pid == %d'%(pid))
+                if len(prev_sched_wakeup) == 0:
+                    logging.warn('len(prev_sched_wakeup) == 0')
+                    logging.debug('sched_switch=%s'%sched_switch)
+                    logging.debug('pre_sched_switch=%s'%prev_sched_switch)
+                    # TODO
+                    continue
+                # take last sched_wakeup
+                prev_sched_wakeup = prev_sched_wakeup.iloc[-1]
+                # self['sched_switch']['latency_type'].iloc[i]  = 'W'
+                # self['sched_switch']['latency_value'].iloc[i] = sched_switch.name - prev_sched_wakeup.name
+                self['sched_switch'].at[sched_switch.name, 'latency_type']  = 'W'
+                self['sched_switch'].at[sched_switch.name, 'latency_value'] = sched_switch.name - prev_sched_wakeup.name
+                continue
+            elif prev_sched_switch['prev_state'] == 'I':
+                # 'I' means TASK_DEAD or kernel thread
+                # Most likely a kernel thread since its a prev_sched_switch
+                # logging.warn("prev_sched_switch['prev_state'] == 'I'")
+                #
+                continue
+            else:
+                logging.warn('prev_sched_switch["prev_state"]=%s not in ["R", "R+", "S", "D", "I"]'%
+                             prev_sched_switch["prev_state"])
+                logging.debug('sched_switch=%s'%sched_switch)
+                logging.debug('pre_sched_switch=%s'%prev_sched_switch)
+                # TODO
+                continue
+        pass
 def try_str_except_int(x):
     try:
         return str(x)
