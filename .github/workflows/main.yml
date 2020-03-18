@@ -18,6 +18,8 @@ jobs:
     name: Builds docker image
     needs: record_trace
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: Download trace from job record_trace
         uses: actions/download-artifact@v1
         with:
@@ -25,8 +27,6 @@ jobs:
           path: trace-cmd/trace.dat
       - run: pwd
       - run: find .
-      - name: Checkout
-        uses: actions/checkout@v2
       - name: docker build step
         uses: ./
       - name: Upload trace.h5
