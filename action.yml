@@ -1,17 +1,14 @@
 name: 'docker build'
 description: 'Runs docker build'
 inputs:
-  entrypoint:
+  bash:
     required: true
-    default: 'python'
-  arg0:
-    required: true
-    default: 'TraceDisplay'
+    default: 'python TraceDisplay'
 runs:
   using: 'docker'
   image: 'Dockerfile'
-  entrypoint: ${{ inputs.entrypoint }}
+  entrypoint: '/bin/bash'
   args:
-    - ${{ inputs.arg0 }}
+    - ${{ inputs.bash }}
   env:
     WALK_PATH: '/github/workspace/artifacts'
