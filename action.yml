@@ -1,5 +1,5 @@
 name: 'Docker Action'
-description: 'Runs `docker build -t TAG` . then `docker run TAG /bin/bash -c "${{ inputs.bash }}"`'
+description: 'Runs `docker build -t TAG` . then `docker run TAG /bin/bash -c "inputs.bash"`'
 inputs:
   bash:
     required: true
