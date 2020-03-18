@@ -1,7 +1,15 @@
-name: 'docker build'
-description: 'Runs docker build'
+name: 'Docker Action'
+description: 'Runs `docker build -t TAG` . then `docker run TAG /bin/bash -c "inputs.bash"`'
+inputs:
+  bash:
+    required: true
+    default: 'python TraceDisplay'
 runs:
   using: 'docker'
   image: 'Dockerfile'
-  entrypoint: 'python'
-  args: ['TraceDisplay']
+  entrypoint: '/bin/bash'
+  args:
+    - '-c'
+    - ${{ inputs.bash }}
+  env:
+    WALK_PATH: '/github/workspace/artifacts'

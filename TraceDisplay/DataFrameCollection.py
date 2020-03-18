@@ -3,6 +3,11 @@ import os
 import logging
 
 class FileExtensionError(Exception):
+    def __init__(self, path=None, expected_extension=None):
+        message = "%s %s" %  (expected_extension, path)
+        super(FileExtensionError, self).__init__(message)
+        self.path = path
+        self.expected_extension = expected_extension
     pass
 
 class DataFrameCollection(object):
@@ -45,7 +50,7 @@ class DataFrameCollection(object):
 
     def save(self, hdf_path):
         if os.path.splitext(hdf_path)[1] != '.h5':
-            raise FileExtensionError()
+            raise FileExtensionError(hdf_path, '.h5')
         if os.path.exists(hdf_path):
             logging.info('Overwriting %s' % hdf_path)
             os.remove(hdf_path)
@@ -57,7 +62,7 @@ class DataFrameCollection(object):
 
     def load(self, hdf_path):
         if os.path.splitext(hdf_path)[1] != '.h5':
-            raise FileExtensionError()
+            raise FileExtensionError(hdf_path, '.h5')
         with pd.HDFStore(hdf_path) as store:
             logging.info('Loading %s' % hdf_path)
             df = {}

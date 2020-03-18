@@ -1,11 +1,47 @@
 on: [push]
 
 jobs:
-  docker_build_job:
+  docker_build_only_job:
     runs-on: ubuntu-latest
     name: Builds docker image
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: docker build step
+      - name: Docker build
         uses: ./
+        with:
+          bash: ':'
+  record_small_trace:
+    name: Record small-trace.dat
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          sudo apt-get update -y
+          sudo apt-get install -y trace-cmd
+          sudo trace-cmd record -o small-trace.dat -e sched echo Hello World
+      - name: Upload small-trace.dat
+        uses: actions/upload-artifact@v1
+        with:
+          name: small-trace.dat
+          path: small-trace.dat
+  docker_build_job:
+    runs-on: ubuntu-latest
+    name: Builds and Tests docker image
+    needs: record_small_trace
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Download small-trace.dat
+        uses: actions/download-artifact@v1
+        with:
+          name: small-trace.dat
+          path: artifacts
+      - name: Docker build and test
+        uses: ./
+        with:
+          bash: 'python TraceDisplay'
+      - name: Upload small-trace.h5
+        uses: actions/upload-artifact@v1
+        with:
+          name: small-trace.h5
+          path: artifacts
