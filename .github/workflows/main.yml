@@ -27,6 +27,9 @@ jobs:
           path: artifacts/trace.dat
       - name: Docker build
         uses: ./
+        with:
+          entrypoint: 'python'
+          arg0: 'TraceDisplay'
       - run: find .
       - name: Upload trace.h5
         uses: actions/upload-artifact@v1
