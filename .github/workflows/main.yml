@@ -33,15 +33,3 @@ jobs:
         with:
           name: trace.h5
           path: artifacts/trace.h5
-  docker_build_only_job:
-    runs-on: ubuntu-latest
-    name: Builds docker image
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Docker build
-        run:
-          using: 'docker'
-          image: 'Dockerfile'
-          entrypoint: '/bin/bash'
-          args:
