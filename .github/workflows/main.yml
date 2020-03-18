@@ -35,7 +35,7 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: small-trace.dat
-          path: artifacts/small-trace.dat
+          path: artifacts
       - name: Docker build and test
         uses: ./
         with:
@@ -45,4 +45,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: small-trace.h5
-          path: artifacts/small-trace.h5
+          path: artifacts
