@@ -4,6 +4,8 @@ import logging
 
 class FileExtensionError(Exception):
     def __init__(self, path=None, expected_extension=None):
+        message = "%s %s" %  (expected_extension, path)
+        super(FileExtensionError, self).__init__(message)
         self.path = path
         self.expected_extension = expected_extension
     pass
