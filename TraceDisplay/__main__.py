@@ -6,6 +6,7 @@ def find(walk_path, path_match='.*'):
     for dirpath, dirnames, filenames in os.walk(walk_path):
         for filename in filenames:
             to_match = os.path.join(dirpath, filename)
+            print(to_match)
             if match.match(to_match):
                 yield to_match
 
