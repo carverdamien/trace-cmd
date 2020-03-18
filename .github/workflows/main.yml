@@ -1,6 +1,10 @@
 on: [push]
 
 jobs:
+  record_trace:
+    runs-on: ubuntu-latest
+    steps:
+      - run: trace-cmd record -e sched echo Hello World
   docker_build_job:
     runs-on: ubuntu-latest
     name: Builds docker image
