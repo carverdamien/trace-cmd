@@ -16,6 +16,7 @@ jobs:
   docker_build_job:
     runs-on: ubuntu-latest
     name: Builds docker image
+    needs: record_trace
     steps:
       - name: Download trace from job record_trace
         uses: actions/download-artifact@v1
