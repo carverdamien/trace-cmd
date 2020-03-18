@@ -6,4 +6,4 @@ runs:
   entrypoint: 'python'
   args: ['TraceDisplay']
   env:
-    WALK_PATH: '/'
+    WALK_PATH: '/github'
