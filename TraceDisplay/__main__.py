@@ -1,4 +1,4 @@
-import unittest, os, re
+import unittest, os, re, logging
 from Trace import Trace
 
 def find(walk_path, path_match='.*'):
@@ -24,4 +24,5 @@ class TestTrace(unittest.TestCase):
         self.assertTrue(count>0)
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     unittest.main()
