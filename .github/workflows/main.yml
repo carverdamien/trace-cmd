@@ -22,8 +22,9 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: trace.dat
-          path: trace.dat
-      - run: find . -name trace.dat
+          path: trace-cmd/trace.dat
+      - run: pwd
+      - run: find .
       - name: Checkout
         uses: actions/checkout@v2
       - name: docker build step
@@ -32,4 +33,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: trace.h5
-          path: trace.h5
+          path: trace-cmd/trace.h5
