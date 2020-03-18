@@ -2,7 +2,7 @@ name: 'docker build'
 description: 'Runs docker build'
 inputs:
   entrypoint:
-    required: true
+#    required: true
     default: 'python'
   arg0:
     required: true
