@@ -8,10 +8,20 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y trace-cmd
           sudo trace-cmd record -e sched echo Hello World
+      - name: Upload trace.dat
+        uses: actions/upload-artifact@v1
+        with:
+          name: trace
+          path: trace.dat
   docker_build_job:
     runs-on: ubuntu-latest
     name: Builds docker image
     steps:
+      - name: Download trace from job record_trace
+        uses: actions/download-artifact@v1
+        with:
+          name: trace
+	  path: TraceDisplay/examples/trace/trace.dat
       - name: Checkout
         uses: actions/checkout@v2
       - name: docker build step
