@@ -11,8 +11,9 @@ def find(walk_path, path_match='.*'):
 
 class TestTrace(unittest.TestCase):
     def test_load_and_save(self):
+        WALK_PATH = os.environ.get('WALK_PATH', '.')
         count = 0
-        for trace_path in find('.', '.*.dat$'):
+        for trace_path in find(WALK_PATH, '.*.dat$'):
             hdf_path = os.path.splitext(trace_path)[1] + '.h5'
             t = Trace()
             t.load(trace_path)
