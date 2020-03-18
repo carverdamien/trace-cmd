@@ -40,7 +40,6 @@ jobs:
         uses: ./
         with:
           bash: 'python TraceDisplay'
-      - run: find .
       - name: Upload small-trace.h5
         uses: actions/upload-artifact@v1
         with:
