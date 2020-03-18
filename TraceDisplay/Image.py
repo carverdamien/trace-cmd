@@ -4,22 +4,16 @@ import logging
 import pandas as pd
 import numpy as np
 
-class ShapeCollection(object):
-    def __init__(self, dict_of_function={}):
-        self.shape = {}
-        for v,k in dict_of_function.items():
-            self[k] = v
-    def __getitem__(self, k):
-        return self.shape[k]
-    def __setitem__(self, k, v):
-        assert hasattr(v, '__call__')
-        self.shape[k] = v
-    def __iter__(self):
-        return iter(self.shape)
+class Shape(object):
+    def __call__(self, *args, **kwargs):
+        return {}
 
-def GenerateDefaultShape(k):
-    def default_shape(df):
-        df = df[k]
+class DefaultShape(Shape):
+    def __init__(self, key):
+        self.key = key
+    def __call__(self, *args, **kwargs):
+        df, = args
+        df = df[self.key]
         timestamp = np.array(df.index, dtype=float)
         cpu = np.array(df['cpu'], dtype=float)
         data = {
@@ -32,11 +26,25 @@ def GenerateDefaultShape(k):
         for k in columns:
             data[k] = df[k]
         return data
-    return default_shape
+
+class ShapeCollection(object):
+    def __init__(self, dict_of_function={}):
+        self.shape = {}
+        for k,v in dict_of_function.items():
+            self[k] = v
+    def __getitem__(self, k):
+        return self.shape[k]
+    def __setitem__(self, k, v):
+        assert hasattr(v, '__call__')
+        self.shape[k] = v
+    def __iter__(self):
+        return iter(self.shape)
+    def items(self):
+        return self.shape.items()
 
 def DefaultShapeCollection(trace):
     return ShapeCollection({
-        k : GenerateDefaultShape(k)
+        k : DefaultShape(k)
         for k in trace
     })
 
@@ -55,7 +63,7 @@ class Image(DataFrameCollection):
         if shapes is None:
             shapes = DefaultShapeCollection(trace)
         # TODO: in parallel
-        for name, func in shapes:
+        for name, func in shapes.items():
             logging.info('Building %s' % name)
             df[name] = pd.DataFrame(func(trace))
         self.df = df
