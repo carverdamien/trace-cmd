@@ -1,0 +1,9 @@
+on: [push]
+
+jobs:
+  docker_build_job:
+    runs-on: ubuntu-latest
+    name: Builds docker image
+    steps:
+    - name: docker build step
+      uses: carverdamien/trace-cmd@TraceDisplay/ci

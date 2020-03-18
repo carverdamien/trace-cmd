@@ -1,7 +1,5 @@
 name: 'docker build'
-
-on: [push]
-
+description: 'Runs docker build'
 runs:
   using: 'docker'
   image: 'Dockerfile'
