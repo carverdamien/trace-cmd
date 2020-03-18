@@ -4,4 +4,4 @@ runs:
   using: 'docker'
   image: 'Dockerfile'
   entrypoint: 'python'
-  args: 'TraceDisplay'
+  args: ['TraceDisplay']
