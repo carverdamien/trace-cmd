@@ -15,7 +15,7 @@ class Trace(DataFrameCollection):
                 assert v.index.name == 'timestamp'
             return
         elif os.path.splitext(path)[1] != '.dat':
-            raise FileExtensionError()
+            raise FileExtensionError(path, '.dat')
         df = {}
         trace = tracecmd.Trace(path)
         # TODO: in parallel
