@@ -24,7 +24,7 @@ class TestTrace(unittest.TestCase):
             t.save(hdf_path)
             i = Image()
             i.build(t)
-            i.save(image)
+            i.save(img_path)
             count += 1
         self.assertTrue(count>0)
 
