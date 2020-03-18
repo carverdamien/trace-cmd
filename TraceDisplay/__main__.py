@@ -16,6 +16,7 @@ class TestTrace(unittest.TestCase):
             hdf_path = os.path.splitext(trace_path)[1] + '.h5'
             t = Trace()
             t.load(trace_path)
+            print(t.timeline(0, 10))
             t.save(hdf_path)
             count += 1
         self.assertTrue(count>0)
