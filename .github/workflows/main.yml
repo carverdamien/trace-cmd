@@ -24,13 +24,11 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: trace.dat
-          path: trace-cmd/trace.dat
-      - run: pwd
-      - run: find .
-      - name: docker build step
+          path: artifacts/trace.dat
+      - name: Docker build
         uses: ./
       - name: Upload trace.h5
         uses: actions/upload-artifact@v1
         with:
           name: trace.h5
-          path: trace-cmd/trace.h5
+          path: artifacts/trace.h5
