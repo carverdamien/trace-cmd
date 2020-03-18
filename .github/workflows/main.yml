@@ -40,7 +40,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Docker build
-        uses:
+        run:
           runs:
             using: 'docker'
             image: 'Dockerfile'
