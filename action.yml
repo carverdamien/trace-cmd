@@ -1,0 +1,7 @@
+name: 'docker build'
+description: 'Runs docker build'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  entrypoint: 'python'
+  args: ['TraceDisplay']
