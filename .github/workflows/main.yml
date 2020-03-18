@@ -41,7 +41,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Docker build
         runs:
-	  using: 'docker'
+          using: 'docker'
           image: 'Dockerfile'
           entrypoint: '/bin/bash'
           args:
