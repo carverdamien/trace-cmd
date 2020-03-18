@@ -1,6 +1,16 @@
 on: [push]
 
 jobs:
+  docker_build_only_job:
+    runs-on: ubuntu-latest
+    name: Builds docker image
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Docker build
+        uses: ./
+        with:
+          bash: ':'
   record_trace:
     runs-on: ubuntu-latest
     steps:
