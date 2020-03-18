@@ -23,6 +23,7 @@ jobs:
         with:
           name: trace.dat
           path: trace.dat
+      - run: find . -name trace.dat
       - name: Checkout
         uses: actions/checkout@v2
       - name: docker build step
