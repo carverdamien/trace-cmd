@@ -21,7 +21,7 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: trace
-	  path: TraceDisplay/examples/trace/trace.dat
+          path: TraceDisplay/examples/trace/trace.dat
       - name: Checkout
         uses: actions/checkout@v2
       - name: docker build step
