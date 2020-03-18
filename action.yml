@@ -5,3 +5,5 @@ runs:
   image: 'Dockerfile'
   entrypoint: 'python'
   args: ['TraceDisplay']
+  env:
+    WALK_PATH: '/github/workspace'
