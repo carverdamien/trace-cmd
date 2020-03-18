@@ -40,8 +40,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Docker build
-        runs:
-          using: 'docker'
-          image: 'Dockerfile'
-          entrypoint: '/bin/bash'
-          args:
+        uses:
+          runs:
+            using: 'docker'
+            image: 'Dockerfile'
+            entrypoint: '/bin/bash'
+            args:
