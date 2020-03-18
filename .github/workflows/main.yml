@@ -5,5 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Builds docker image
     steps:
-    - name: docker build step
-      uses: carverdamien/trace-cmd@TraceDisplay/ci
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: docker build step
+        uses: ./.github/
