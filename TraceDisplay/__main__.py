@@ -15,7 +15,7 @@ class TestTrace(unittest.TestCase):
         WALK_PATH = os.environ.get('WALK_PATH', '.')
         count = 0
         for trace_path in find(WALK_PATH, '.*.dat$'):
-            hdf_path = os.path.splitext(trace_path)[1] + '.h5'
+            hdf_path = os.path.splitext(trace_path)[0] + '.h5'
             t = Trace()
             t.load(trace_path)
             print(t.timeline(0, 10))
