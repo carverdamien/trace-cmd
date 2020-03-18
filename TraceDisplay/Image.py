@@ -28,7 +28,7 @@ def GenerateDefaultShape(k):
             'y0' : cpu,
             'y1' : cpu + 0.5,
         }
-        columns = filter(lambda k not in ['cpu'], df.columns)
+        columns = filter(lambda k: k not in ['cpu'], df.columns)
         for k in columns:
             data[k] = df[k]
         return data
