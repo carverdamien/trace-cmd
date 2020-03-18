@@ -27,9 +27,9 @@ def main(render_path, data_path):
         fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
         for line in image:
             X0 = image[line]['x0'].values
-	    X1 = image[line]['x1'].values
-	    Y0 = image[line]['y0'].values
-	    Y1 = image[line]['y1'].values
+            X1 = image[line]['x1'].values
+            Y0 = image[line]['y0'].values
+            Y1 = image[line]['y1'].values
             L = np.transpose(np.array([[X0,X1],[Y0,Y1]]))
             # lc = LineCollection(L,color=category[c]['color'],label=category[c]['label'])
             lc = LineCollection(L,label=line,color='#000000')
