@@ -1,5 +1,5 @@
 import unittest, os, re
-import TraceDisplay
+from Trace import Trace
 
 def find(walk_path, path_match='.*'):
     match = re.compile(path_match)
@@ -14,7 +14,7 @@ class TestTrace(unittest.TestCase):
         count = 0
         for trace_path in find('.', '.*.dat'):
             hdf_path = os.path.splitext(trace_path)[1] + '.h5'
-            t = TraceDisplay.Trace()
+            t = Trace()
             t.load(trace_path)
             t.save(hdf_path)
             count += 1
