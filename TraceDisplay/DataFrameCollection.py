@@ -70,4 +70,4 @@ class DataFrameCollection(object):
             self.drop()
             for k in store.keys():
                 logging.info('Loading %s' % k)
-                self[k] = store[k]
+                self.df[k] = store[k]
