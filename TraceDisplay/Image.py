@@ -80,9 +80,9 @@ class ShapeCollection(object):
         data = []
         index = []
         columns = ['shape_class']
-        for k,v in self:
+        for k,v in self.items():
             index.append(k)
-            data.append([v])
+            data.append([v.shape_class])
         return pd.DataFrame(data, index=index, columns=columns)
 
 def DefaultShapeCollection(trace):
@@ -96,8 +96,8 @@ def DefaultCategory(image):
     index = []
     columns = ['color', 'label']
     category = 0
-    for k,v in image:
-        index.append(i)
+    for k,v in image.items():
+        index.append(category)
         color = '#000000' # TODO: random
         label = k
         v['category'] = category
@@ -106,7 +106,7 @@ def DefaultCategory(image):
     return pd.DataFrame(data, index=index, columns=columns)
 
 class Image(DataFrameCollection):
-    PRIVATE_KEYS = DataFrameCollection.PRIVATE_KEYS + ['shape', 'category']
+    PRIVATE_KEYS = DataFrameCollection.PRIVATE_KEYS + ['/shape', '/category']
     SHAPE_CLASS = {
         'LineShape' : LineShape,
     }
@@ -114,26 +114,26 @@ class Image(DataFrameCollection):
         super(Image, self).__init__(*args, **kwargs)
 
     def shape(self, k):
-        return self.__class__.SHAPE_CLASS[self.df['shape'].loc[k]['shape_class']]
+        return self.__class__.SHAPE_CLASS[self.df['/shape'].loc[k]['shape_class']]
 
     def category(self, k):
-        return self.df['category'].loc[category]
+        return self.df['/category'].loc[k]
 
     def load(self, path):
         super(Image, self).load(path)
         # Check format
         for k,v in self.items():
-            shape = self.shape[k]
+            shape = self.shape(k)
             for kk in shape.shape_fields:
                 assert kk in v.columns
             for category in np.unique(v['category']):
-                assert category in self.df['category'].index.values
+                assert category in self.df['/category'].index.values
 
     def build(self, trace, shape=None, category=None):
         df = {}
         if shape is None:
             shape = DefaultShapeCollection(trace)
-        assert isinstance(shapes, ShapeCollection)
+        assert isinstance(shape, ShapeCollection)
         df['shape'] = shape.to_DataFrame()
         # TODO: in parallel
         for k, v in shape.items():
@@ -149,7 +149,7 @@ class Image(DataFrameCollection):
             shape_fields = self.shape(k).shape_fields
             todrop = list(filter(lambda k : k not in shape_fields, self.df[k].columns))
             return self.df[k].drop(columns=todrop)
-        line = pd.concat([df(k) for k in filter(lambda k: isinstance(self.shape(k), LineShape), self)])
+        line = pd.concat([df(k) for k in filter(lambda k: self.shape(k) is LineShape, self)])
         line['category'] = line['category'].astype('category')
         color_key = [self.category(category)['color'] for category in np.unique(line['category'])]
         return line, color_key
