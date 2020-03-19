@@ -41,7 +41,7 @@ class DataFrameCollection(object):
             yield v
 
     def items(self):
-        return filter(lambda k,v : k not in self.__class__.PRIVATE_KEYS, self.df.items())
+        return filter(lambda i : i[0] not in self.__class__.PRIVATE_KEYS, self.df.items())
 
     def keys(self):
         return filter(lambda k : k not in self.__class__.PRIVATE_KEYS, self.df.keys())
