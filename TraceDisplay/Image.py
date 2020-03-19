@@ -35,7 +35,7 @@ class ShapeCollection(object):
     def __getitem__(self, k):
         return self.shape[k]
     def __setitem__(self, k, v):
-        assert hasattr(v, '__call__')
+        assert callable(v)
         self.shape[k] = v
     def __iter__(self):
         return iter(self.shape)
