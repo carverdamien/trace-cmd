@@ -3,6 +3,7 @@ import os
 import logging
 import pandas as pd
 import numpy as np
+import itertools
 
 class Shape(object):
     """AbstractShape"""
@@ -91,19 +92,38 @@ def DefaultShapeCollection(trace):
         for k in trace
     })
 
-def DefaultCategory(image):
-    data = []
-    index = []
-    columns = ['color', 'label']
-    category = 0
-    for k,v in image.items():
-        index.append(category)
-        color = '#000000' # TODO: random
-        label = k
-        v['category'] = category
-        data.append([color, label])
-        category+=1
-    return pd.DataFrame(data, index=index, columns=columns)
+class DefaultCategory(object):
+    DEFAULT_COLOR_VALUE = [
+        '#660066',
+        '#006633',
+        '#FFCC00',
+        '#CC3333',
+        '#996633',
+        '#000099',
+        '#000000',
+        '#0099CC',
+        '#868F98',
+        '#009999',
+        '#CC9999',
+        '#66CCCC',
+        '#66CC00',
+        '#FF6600',
+    ]
+    def __init__(self):
+        self.color = itertools.cycle(self.__class__.DEFAULT_COLOR_VALUE)
+    def __call__(self, image):
+        data = []
+        index = []
+        columns = ['color', 'label']
+        category = 0
+        for k,v in image.items():
+            index.append(category)
+            color = next(self.color)
+            label = k
+            v['category'] = category
+            data.append([color, label])
+            category+=1
+        return pd.DataFrame(data, index=index, columns=columns)
 
 class Image(DataFrameCollection):
     PRIVATE_KEYS = DataFrameCollection.PRIVATE_KEYS + ['/shape', '/category']
@@ -142,7 +162,7 @@ class Image(DataFrameCollection):
         self.df = df
         if category is None:
             category = DefaultCategory
-        self.df['category'] = DefaultCategory(self)
+        self.df['category'] = DefaultCategory()(self)
 
     def line(self):
         def df(k):
@@ -151,5 +171,6 @@ class Image(DataFrameCollection):
             return self.df[k].drop(columns=todrop)
         line = pd.concat([df(k) for k in filter(lambda k: self.shape(k) is LineShape, self)])
         line['category'] = line['category'].astype('category')
-        color_key = [self.category(category)['color'] for category in np.unique(line['category'])]
-        return line, color_key
+        color_map = {category : self.category(category)['color'] for category in np.unique(line['category'])}
+        label_map = {category : self.category(category)['label'] for category in np.unique(line['category'])}
+        return line, color_map, label_map
