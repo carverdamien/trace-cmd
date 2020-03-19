@@ -1,6 +1,7 @@
 import unittest, os, re, logging
 from Trace import Trace
 from Image import Image
+from Render import render
 
 def find(walk_path, path_match='.*'):
     match = re.compile(path_match)
@@ -18,6 +19,7 @@ class TestTrace(unittest.TestCase):
         for trace_path in find(WALK_PATH, '.*.dat$'):
             hdf_path = os.path.splitext(trace_path)[0] + '.h5'
             img_path = os.path.splitext(trace_path)[0] + '.i.h5'
+            render_path = os.path.splitext(trace_path)[0] + '.png'
             t = Trace()
             t.load(trace_path)
             print(t.timeline(0, 10))
@@ -26,6 +28,7 @@ class TestTrace(unittest.TestCase):
             i.build(t)
             i.save(img_path)
             print(i.line())
+            render(render_path, img_path)
             count += 1
         self.assertTrue(count>0)
 
