@@ -114,7 +114,7 @@ class Image(DataFrameCollection):
             shape_fields = self.shapes[k].__class__.shape_fields
             todrop = list(filter(lambda k : k not in shape_fields, self.df[k].columns))
             return self.df[k].drop(columns=todrop)
-        line = pd.concat([df(k) for k in filter(lambda k: isinstance(k, LineShape), self.shapes)])
+        line = pd.concat([df(k) for k in filter(lambda k: isinstance(self.shapes[k], LineShape), self.shapes)])
         line['category'] = line['category'].astype('category')
         color_key = [self.category[category].color for category in np.unique(line['category'])]
         return line, color_key
