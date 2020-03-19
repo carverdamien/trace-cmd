@@ -19,13 +19,14 @@ class DataFrameCollection(object):
         self.df = dict_of_data_frames
 
     def __getitem__(self, k):
+        if k[0] != '/':
+            k = '/'+k
         assert k not in self.__class__.PRIVATE_KEYS
-        kk = '/'+str(k)
-        if k not in self.df and kk in self.df:
-            k = kk
         return self.df[k]
 
     def __setitem__(self, k, v):
+        if k[0] != '/':
+            k = '/'+k
         assert k not in self.__class__.PRIVATE_KEYS
         assert isinstance(v, pd.DataFrame)
         self.df[k] = v
