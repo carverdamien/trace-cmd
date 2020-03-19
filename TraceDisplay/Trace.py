@@ -11,7 +11,7 @@ class Trace(DataFrameCollection):
         if os.path.splitext(path)[1] == '.h5':
             super(Trace, self).load(path)
             # TODO: raise exception if DataFrameCollection is not a Trace
-            for k,v in self.df.items():
+            for k,v in self.items():
                 assert v.index.name == 'timestamp'
             return
         elif os.path.splitext(path)[1] != '.dat':

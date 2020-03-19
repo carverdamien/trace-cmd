@@ -11,6 +11,7 @@ class FileExtensionError(Exception):
     pass
 
 class DataFrameCollection(object):
+    PRIVATE_KEYS = []
     def __init__(self,dict_of_data_frames={}):
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames:
@@ -18,35 +19,32 @@ class DataFrameCollection(object):
         self.df = dict_of_data_frames
 
     def __getitem__(self, k):
+        assert k not in self.__class__.PRIVATE_KEYS
         kk = '/'+str(k)
         if k not in self.df and kk in self.df:
             k = kk
         return self.df[k]
 
     def __setitem__(self, k, v):
+        assert k not in self.__class__.PRIVATE_KEYS
         assert isinstance(v, pd.DataFrame)
         self.df[k] = v
 
-    def __len__(self):
-        return len(self.df)
-
-    def __delitem__(self, k):
-        del self.df[k]
-
     def __iter__(self):
-        return iter(self.df)
+        return filter(lambda k : k not in self.__class__.PRIVATE_KEYS, iter(self.df))
 
     def __contains__(self, v):
         return v in self.df
 
     def values(self):
-        return self.df.values()
+        for k,v in self.items():
+            yield v
 
     def items(self):
-        return self.df.items()
+        return filter(lambda k,v : k not in self.__class__.PRIVATE_KEYS, self.df.items())
 
     def keys(self):
-        return self.df.keys()
+        return filter(lambda k : k not in self.__class__.PRIVATE_KEYS, self.df.keys())
 
     def save(self, hdf_path):
         if os.path.splitext(hdf_path)[1] != '.h5':

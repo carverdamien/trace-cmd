@@ -4,15 +4,9 @@ import logging
 import pandas as pd
 import numpy as np
 
-class Category(object):
-    def __init__(self, color, label):
-        super(Category, self).__init__()
-        self.color = color
-        self.label = label
-
 class Shape(object):
     """AbstractShape"""
-    shape_name = 'Shape'
+    shape_class = 'Shape'
     shape_fields = ['category']
     def __call__(self, *args, **kwargs):
         logging.error('AbstractShape should not be called.')
@@ -20,9 +14,21 @@ class Shape(object):
             'category' : [],
         }
 
+class PointShape(Shape):
+    """AbstractShape"""
+    shape_class = 'PointShape'
+    shape_fields = Shape.shape_fields + ['x','y']
+    def __call__(self, *args, **kwargs):
+        logging.error('AbstractShape should not be called.')
+        return {
+            'category' : [],
+            'x'        : [],
+            'y'        : [],
+        }
+
 class LineShape(Shape):
     """AbstractShape"""
-    shape_name = 'LineShape'
+    shape_class = 'LineShape'
     shape_fields = Shape.shape_fields + ['x0','x1','y0','y1']
     def __call__(self, *args, **kwargs):
         logging.error('AbstractShape should not be called.')
@@ -70,6 +76,14 @@ class ShapeCollection(object):
         return iter(self.shape)
     def items(self):
         return self.shape.items()
+    def to_DataFrame(self):
+        data = []
+        index = []
+        columns = ['shape_class']
+        for k,v in self:
+            index.append(k)
+            data.append([v])
+        return pd.DataFrame(data, index=index, columns=columns)
 
 def DefaultShapeCollection(trace):
     return ShapeCollection({
@@ -77,44 +91,65 @@ def DefaultShapeCollection(trace):
         for k in trace
     })
 
+def DefaultCategory(image):
+    data = []
+    index = []
+    columns = ['color', 'label']
+    category = 0
+    for k,v in image:
+        index.append(i)
+        color = '#000000' # TODO: random
+        label = k
+        v['category'] = category
+        data.append([color, label])
+        category+=1
+    return pd.DataFrame(data, index=index, columns=columns)
+
 class Image(DataFrameCollection):
+    PRIVATE_KEYS = DataFrameCollection.PRIVATE_KEYS + ['shape', 'category']
+    SHAPE_CLASS = {
+        'LineShape' : LineShape,
+    }
     def __init__(self, *args, **kwargs):
         super(Image, self).__init__(*args, **kwargs)
-        self.category = [Category(color='#000000',label='default')]
-        self.shapes = None
+
+    def shape(self, k):
+        return self.__class__.SHAPE_CLASS[self.df['shape'].loc[k]['shape_class']]
+
+    def category(self, k):
+        return self.df['category'].loc[category]
 
     def load(self, path):
         super(Image, self).load(path)
-        # TODO: raise exception if DataFrameCollection is not an Image
-        for k,v in self.df.items():
-            for kk in LineShape.shape_fields:
+        # Check format
+        for k,v in self.items():
+            shape = self.shape[k]
+            for kk in shape.shape_fields:
                 assert kk in v.columns
-        # For now, the only shape available is line.
-        # Assume we are loading lines.
-        # TODO: we need to save the type of the shape
-        self.shapes = ShapeCollection({
-            k : LineShape()
-            for k in self.df
-        })
+            for category in np.unique(v['category']):
+                assert category in self.df['category'].index.values
 
-    def build(self, trace, shapes=None):
+    def build(self, trace, shape=None, category=None):
         df = {}
-        if shapes is None:
-            shapes = DefaultShapeCollection(trace)
+        if shape is None:
+            shape = DefaultShapeCollection(trace)
         assert isinstance(shapes, ShapeCollection)
+        df['shape'] = shape.to_DataFrame()
         # TODO: in parallel
-        for name, func in shapes.items():
-            logging.info('Building %s' % name)
-            df[name] = pd.DataFrame(func(trace))
-        self.shapes = shapes
+        for k, v in shape.items():
+            logging.info('Building %s' % k)
+            df[k] = pd.DataFrame(v(trace))
         self.df = df
+        if category is None:
+            category = DefaultCategory
+        self.df['category'] = DefaultCategory(self)
 
     def line(self):
         def df(k):
-            shape_fields = self.shapes[k].__class__.shape_fields
+            shape_fields = self.shape(k).shape_fields
             todrop = list(filter(lambda k : k not in shape_fields, self.df[k].columns))
             return self.df[k].drop(columns=todrop)
-        line = pd.concat([df(k) for k in filter(lambda k: isinstance(self.shapes[k], LineShape), self.shapes)])
+        line = pd.concat([df(k) for k in filter(lambda k: isinstance(self.shape(k), LineShape), self)])
         line['category'] = line['category'].astype('category')
-        color_key = [self.category[category].color for category in np.unique(line['category'])]
+        color_key = [self.category(category)['color'] for category in np.unique(line['category'])]
         return line, color_key
