@@ -17,13 +17,15 @@ class DefaultShape(Shape):
         timestamp = np.array(df.index, dtype=float)
         cpu = np.array(df['cpu'], dtype=float)
         data = {
-            'x0': timestamp,
-            'x1': timestamp,
-            'y0' : cpu,
-            'y1' : cpu + 0.5,
+            'x0'    : timestamp,
+            'x1'    : timestamp,
+            'y0'    : cpu,
+            'y1'    : cpu + 0.5,
+            'color' : np.zeros(len(timestamp), dtype=int),
         }
         columns = filter(lambda k: k not in ['cpu'], df.columns)
         for k in columns:
+            assert k not in ['x0','x1','y0','y1','color']
             data[k] = df[k]
         return data
 
@@ -51,11 +53,13 @@ def DefaultShapeCollection(trace):
 class Image(DataFrameCollection):
     def __init__(self, *args, **kwargs):
         super(Image, self).__init__(*args, **kwargs)
+
     def load(self, path):
         super(Image, self).load(path)
         # TODO: raise exception if DataFrameCollection is not an Image
         for k,v in self.df.items():
-            for kk in ['x0','x1','y0','y1']:
+            # The only shape available is line
+            for kk in ['x0','x1','y0','y1','color']:
                 assert kk in v.columns
 
     def build(self, trace, shapes=None):
