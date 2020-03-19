@@ -31,7 +31,7 @@ class DataFrameCollection(object):
         self.df[k] = v
 
     def __iter__(self):
-        return filter(lambda k : k not in self.__class__.PRIVATE_KEYS, iter(self.df))
+        return iter(filter(lambda k : k not in self.__class__.PRIVATE_KEYS, iter(self.df)))
 
     def __contains__(self, v):
         return v in self.df
