@@ -4,6 +4,12 @@ import logging
 import pandas as pd
 import numpy as np
 
+class Category(object):
+    def __init__(self, color, label):
+        super(Category, self).__init__()
+        self.color = color
+        self.label = label
+
 class Shape(object):
     def __call__(self, *args, **kwargs):
         return {}
@@ -17,15 +23,15 @@ class DefaultShape(Shape):
         timestamp = np.array(df.index, dtype=float)
         cpu = np.array(df['cpu'], dtype=float)
         data = {
-            'x0'    : timestamp,
-            'x1'    : timestamp,
-            'y0'    : cpu,
-            'y1'    : cpu + 0.5,
-            'color' : np.zeros(len(timestamp), dtype=int),
+            'x0'       : timestamp,
+            'x1'       : timestamp,
+            'y0'       : cpu,
+            'y1'       : cpu + 0.5,
+            'category' : np.zeros(len(timestamp), dtype=int),
         }
         columns = filter(lambda k: k not in ['cpu'], df.columns)
         for k in columns:
-            assert k not in ['x0','x1','y0','y1','color']
+            assert k not in ['x0','x1','y0','y1','category']
             data[k] = df[k]
         return data
 
@@ -53,13 +59,14 @@ def DefaultShapeCollection(trace):
 class Image(DataFrameCollection):
     def __init__(self, *args, **kwargs):
         super(Image, self).__init__(*args, **kwargs)
+        self.category = [Category(color='#000000',label='default')]
 
     def load(self, path):
         super(Image, self).load(path)
         # TODO: raise exception if DataFrameCollection is not an Image
         for k,v in self.df.items():
             # The only shape available is line
-            for kk in ['x0','x1','y0','y1','color']:
+            for kk in ['x0','x1','y0','y1','category']:
                 assert kk in v.columns
 
     def build(self, trace, shapes=None):
