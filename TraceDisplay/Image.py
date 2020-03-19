@@ -150,16 +150,15 @@ class Image(DataFrameCollection):
                 assert category in self.df['/category'].index.values
 
     def build(self, trace, shape=None, category=None):
-        df = {}
+        self.drop()
         if shape is None:
             shape = DefaultShapeCollection(trace)
         assert isinstance(shape, ShapeCollection)
-        df['/shape'] = shape.to_DataFrame()
+        self.df['/shape'] = shape.to_DataFrame()
         # TODO: in parallel
         for k, v in shape.items():
             logging.info('Building %s' % k)
-            df[k] = pd.DataFrame(v(trace))
-        self.df = df
+            self[k] = pd.DataFrame(v(trace))
         if category is None:
             category = DefaultCategory
         self.df['/category'] = DefaultCategory()(self)
@@ -167,8 +166,8 @@ class Image(DataFrameCollection):
     def line(self):
         def df(k):
             shape_fields = self.shape(k).shape_fields
-            todrop = list(filter(lambda k : k not in shape_fields, self.df[k].columns))
-            return self.df[k].drop(columns=todrop)
+            todrop = list(filter(lambda k : k not in shape_fields, self[k].columns))
+            return self[k].drop(columns=todrop)
         line = pd.concat([df(k) for k in filter(lambda k: self.shape(k) is LineShape, self)])
         line['category'] = line['category'].astype('category')
         color_map = {category : self.category(category)['color'] for category in np.unique(line['category'])}

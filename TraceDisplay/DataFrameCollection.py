@@ -13,10 +13,13 @@ class FileExtensionError(Exception):
 class DataFrameCollection(object):
     PRIVATE_KEYS = []
     def __init__(self,dict_of_data_frames={}):
+        self.df = {}
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames:
-            assert isinstance(v, pd.DataFrame)
-        self.df = dict_of_data_frames
+            self[k] = v
+
+    def drop(self):
+        self.df = {}
 
     def __getitem__(self, k):
         if k[0] != '/':
@@ -64,8 +67,7 @@ class DataFrameCollection(object):
             raise FileExtensionError(hdf_path, '.h5')
         with pd.HDFStore(hdf_path) as store:
             logging.info('Loading %s' % hdf_path)
-            df = {}
+            self.drop()
             for k in store.keys():
                 logging.info('Loading %s' % k)
-                df[k] = store[k]
-            self.df = df
+                self[k] = store[k]

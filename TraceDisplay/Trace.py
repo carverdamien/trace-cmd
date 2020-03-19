@@ -17,6 +17,7 @@ class Trace(DataFrameCollection):
         elif os.path.splitext(path)[1] != '.dat':
             raise FileExtensionError(path, '.dat')
         df = {}
+        self.drop()
         trace = tracecmd.Trace(path)
         # TODO: in parallel
         for cpu in range(trace.cpus):
@@ -37,7 +38,8 @@ class Trace(DataFrameCollection):
             # because two cpu can produce the same timestamp
             df[event].set_index('timestamp', inplace=True)
             df[event].sort_index(inplace=True, ascending=True)
-        self.df = df
+        for k,v in df.items():
+            self[k] = v
         print_warning(self, path)
     def timeline(self, timestamp=0, size=10, tmin=None, tmax=None):
         assert size > 0
@@ -215,7 +217,7 @@ EXTRA = {
 }
 
 def print_warning(trace, path):
-    if 'sched_switch' not in trace.df:
+    if 'sched_switch' not in trace:
         return
     import subprocess
     pat = """print fmt: "prev_comm=%s prev_pid=%d prev_prio=%d prev_state=%s%s ==> next_comm=%s next_pid=%d next_prio=%d", REC->prev_comm, REC->prev_pid, REC->prev_prio, (REC->prev_state & ((((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) - 1)) ? __print_flags(REC->prev_state & ((((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) - 1), "|", { 0x0001, "S" }, { 0x0002, "D" }, { 0x0004, "T" }, { 0x0008, "t" }, { 0x0010, "X" }, { 0x0020, "Z" }, { 0x0040, "P" }, { 0x0080, "I" }) : "R", REC->prev_state & (((0x0000 | 0x0001 | 0x0002 | 0x0004 | 0x0008 | 0x0010 | 0x0020 | 0x0040) + 1) << 1) ? "+" : "", REC->next_comm, REC->next_pid, REC->next_prio"""
