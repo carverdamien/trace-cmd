@@ -23,7 +23,7 @@ class Shape(object):
 class LineShape(Shape):
     """AbstractShape"""
     shape_name = 'LineShape'
-    shape_fields = super(LineShape).shape_fields + ['x0','x1','y0','y1']
+    shape_fields = Shape.shape_fields + ['x0','x1','y0','y1']
     def __call__(self, *args, **kwargs):
         logging.error('AbstractShape should not be called.')
         return {
