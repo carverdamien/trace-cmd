@@ -154,7 +154,7 @@ class Image(DataFrameCollection):
         if shape is None:
             shape = DefaultShapeCollection(trace)
         assert isinstance(shape, ShapeCollection)
-        df['shape'] = shape.to_DataFrame()
+        df['/shape'] = shape.to_DataFrame()
         # TODO: in parallel
         for k, v in shape.items():
             logging.info('Building %s' % k)
@@ -162,7 +162,7 @@ class Image(DataFrameCollection):
         self.df = df
         if category is None:
             category = DefaultCategory
-        self.df['category'] = DefaultCategory()(self)
+        self.df['/category'] = DefaultCategory()(self)
 
     def line(self):
         def df(k):
