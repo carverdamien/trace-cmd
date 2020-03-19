@@ -25,6 +25,7 @@ class TestTrace(unittest.TestCase):
             i = Image()
             i.build(t)
             i.save(img_path)
+            print(i.line())
             count += 1
         self.assertTrue(count>0)
 
