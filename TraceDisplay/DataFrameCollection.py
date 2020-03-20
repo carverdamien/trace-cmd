@@ -24,13 +24,13 @@ class DataFrameCollection(object):
     def __getitem__(self, k, private_key=False):
         if k[0] != '/':
             k = '/'+k
-        assert not private_key or k not in self.__class__.PRIVATE_KEYS
+        assert private_key or k not in self.__class__.PRIVATE_KEYS
         return self._df[k]
 
     def __setitem__(self, k, v, private_key=False):
         if k[0] != '/':
             k = '/'+k
-        assert not private_key or k not in self.__class__.PRIVATE_KEYS
+        assert private_key or k not in self.__class__.PRIVATE_KEYS
         assert isinstance(v, pd.DataFrame)
         self._df[k] = v
 
