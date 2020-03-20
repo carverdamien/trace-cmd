@@ -2,6 +2,48 @@
 import numpy as np
 from Image import Image
 
+def plotly_render(render_path, data_path):
+    import plotly.graph_objs as go
+    from plotly.offline import plot
+
+    image = Image()
+    image.load(data_path)
+    line, color_map, label_map = image.line()
+
+    def data(category):
+        q = line.query('category == %d' % (category))
+        N = len(q)
+        X0 = q['x0'].values
+        X1 = q['x1'].values
+        Y0 = q['y0'].values
+        Y1 = q['y1'].values
+
+        x = np.empty(3*N)
+        x[:] = np.nan
+        x[0:(3*N)-2:3] = X0
+        x[1:(3*N)-1:3] = X1
+
+        y = np.empty(3*N)
+        y[:] = np.nan
+        y[0:(3*N)-2:3] = Y0
+        y[1:(3*N)-1:3] = Y1
+
+        return go.Scattergl(
+            x=x, y=y, mode='lines',
+            line=dict(color=color_map[category]),
+            name=label_map[category]
+        )
+
+    fig = go.Figure(
+        data=[
+            data(category)
+            for category in np.unique(line['category'])
+        ]
+    )
+
+    plot(fig, filename=render_path, auto_open=False)
+    pass
+
 def mpl_render(render_path, data_path):
     import matplotlib as mpl
     mpl.use('Agg')
@@ -48,5 +90,8 @@ def mpl_render(render_path, data_path):
     pass
 
 if __name__ == '__main__':
+    print('plotly_render')
+    plotly_render('./img.html', './img.h5')
+    print('mpl_render')
     mpl_render('./img.png', './img.h5')
     # main('./rqsize.png', './rqsize.h5')

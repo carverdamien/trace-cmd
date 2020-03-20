@@ -26,6 +26,7 @@ class TestTrace(unittest.TestCase):
             hdf_path = no_ext_path + '.h5'
             img_path = no_ext_path + '.i.h5'
             mpl_render_path = no_ext_path + '.png'
+            plotly_render_path = no_ext_path + '.html'
             timeline_path = no_ext_path + '.csv'
             t = Trace()
             t.load(trace_path)
@@ -35,6 +36,7 @@ class TestTrace(unittest.TestCase):
             i.build(t)
             i.save(img_path)
             mpl_render(mpl_render_path, img_path)
+            mpl_render(plotly_render_path, img_path)
             count += 1
         self.assertTrue(count>0)
 
