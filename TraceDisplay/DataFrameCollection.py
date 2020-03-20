@@ -15,7 +15,7 @@ class DataFrameCollection(object):
     def __init__(self,dict_of_data_frames={}):
         self._df = {}
         assert isinstance(dict_of_data_frames, dict)
-        for k,v in dict_of_data_frames:
+        for k,v in dict_of_data_frames.items():
             self[k] = v
 
     def drop(self):
