@@ -24,10 +24,23 @@ jobs:
         with:
           name: small-sched-trace.dat
           path: small-sched-trace.dat
+  record_small_full_trace:
+    name: Record small-full-trace.dat
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          sudo apt-get update -y
+          sudo apt-get install -y trace-cmd
+          sudo trace-cmd record -o small-full-trace.dat -e * echo Hello World
+      - name: Upload small-full-trace.dat
+        uses: actions/upload-artifact@v1
+        with:
+          name: small-full-trace.dat
+          path: small-full-trace.dat
   docker_build_job:
     runs-on: ubuntu-latest
     name: Builds and Tests docker image
-    needs: record_small_sched_trace
+    needs: [record_small_sched_trace, record_small_full_trace]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -35,6 +48,11 @@ jobs:
         uses: actions/download-artifact@v1
         with:
           name: small-sched-trace.dat
+          path: artifacts
+      - name: Download small-full-trace.dat
+        uses: actions/download-artifact@v1
+        with:
+          name: small-full-trace.dat
           path: artifacts
       - name: Docker build and test
         uses: ./
