@@ -74,7 +74,7 @@ def try_str_except_int(x):
         return int(x)
 
 CAST = {
-    'unsigned long[6]' : int,
+    'unsigned long[6]' : int, # lambda x : x.data,
     'unsigned long' : int,
     's64' : int,
     'void *' : int,
@@ -91,6 +91,10 @@ CAST = {
     'char[16]' : str,
     '__data_loc char[]' : str,
 }
+
+def NOT_IN_CAST(t):
+    logging.warn('%s not in CAST' % (t))
+    return int
 
 def typeof(key, event):
     return tracecmd.tep_format_field_type_get(event[str(key)]._field)
@@ -112,7 +116,7 @@ def event_to_dict(event):
         ]
     })
     ret.update({
-        key:CAST[typeof(key,event)](event[str(key)])
+        key:CAST.get(typeof(key,event), NOT_IN_CAST(typeof(key,event)))(event[str(key)])
         for key in event.keys()
     })
     if ret['event'] in EXTRA:
