@@ -1,5 +1,6 @@
 import unittest, os, re, logging
 import numpy as np
+import pandas as pd
 from Trace import Trace
 from Image import Image
 from Render import render
