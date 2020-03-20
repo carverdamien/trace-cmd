@@ -90,14 +90,15 @@ CAST = {
     'char *' : try_str_except_int,
     'char[16]' : str,
     '__data_loc char[]' : str,
+    'enum hrtimer_mode' : int,
 }
 
 def NOT_IN_CAST(t):
-    logging.warn('%s not in CAST' % (t))
+    logging.warn("'%s' not in CAST" % (t))
     return int
 
 def typeof(key, event):
-    return tracecmd.tep_format_field_type_get(event[str(key)]._field)
+    return str(tracecmd.tep_format_field_type_get(event[str(key)]._field))
 
 def event_to_dict(event):
     ret = {
