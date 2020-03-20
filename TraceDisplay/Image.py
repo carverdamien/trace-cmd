@@ -134,10 +134,10 @@ class Image(DataFrameCollection):
         super(Image, self).__init__(*args, **kwargs)
 
     def shape(self, k):
-        return self.__class__.SHAPE_CLASS[self.df['/shape'].loc[k]['shape_class']]
+        return self.__class__.SHAPE_CLASS[self.__getitem__('/shape', private_key=True).loc[k]['shape_class']]
 
     def category(self, k):
-        return self.df['/category'].loc[k]
+        return self.__getitem__('/category', private_key=True).loc[k]
 
     def load(self, path):
         super(Image, self).load(path)
@@ -147,21 +147,21 @@ class Image(DataFrameCollection):
             for kk in shape.shape_fields:
                 assert kk in v.columns
             for category in np.unique(v['category']):
-                assert category in self.df['/category'].index.values
+                assert category in self.__getitem__('/category', private_key=True).index.values
 
     def build(self, trace, shape=None, category=None):
         self.drop()
         if shape is None:
             shape = DefaultShapeCollection(trace)
         assert isinstance(shape, ShapeCollection)
-        self.df['/shape'] = shape.to_DataFrame()
+        self.__setitem__('/shape', shape.to_DataFrame(), private_key=True)
         # TODO: in parallel
         for k, v in shape.items():
             logging.info('Building %s' % k)
             self[k] = pd.DataFrame(v(trace))
         if category is None:
             category = DefaultCategory
-        self.df['/category'] = DefaultCategory()(self)
+        self.__setitem__('/category', DefaultCategory()(self), private_key=True)
 
     def line(self):
         def df(k):

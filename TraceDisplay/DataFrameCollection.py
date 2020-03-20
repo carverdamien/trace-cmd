@@ -13,42 +13,42 @@ class FileExtensionError(Exception):
 class DataFrameCollection(object):
     PRIVATE_KEYS = []
     def __init__(self,dict_of_data_frames={}):
-        self.df = {}
+        self._df = {}
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames:
             self[k] = v
 
     def drop(self):
-        self.df = {}
+        self._df = {}
 
-    def __getitem__(self, k):
+    def __getitem__(self, k, private_key=False):
         if k[0] != '/':
             k = '/'+k
-        assert k not in self.__class__.PRIVATE_KEYS
-        return self.df[k]
+        assert not private_key or k not in self.__class__.PRIVATE_KEYS
+        return self._df[k]
 
-    def __setitem__(self, k, v):
+    def __setitem__(self, k, v, private_key=False):
         if k[0] != '/':
             k = '/'+k
-        assert k not in self.__class__.PRIVATE_KEYS
+        assert not private_key or k not in self.__class__.PRIVATE_KEYS
         assert isinstance(v, pd.DataFrame)
-        self.df[k] = v
+        self._df[k] = v
 
     def __iter__(self):
-        return iter(filter(lambda k : k not in self.__class__.PRIVATE_KEYS, iter(self.df)))
+        return iter(filter(lambda k : k not in self.__class__.PRIVATE_KEYS, iter(self._df)))
 
     def __contains__(self, v):
-        return v in self.df
+        return v in self._df
 
     def values(self):
         for k,v in self.items():
             yield v
 
     def items(self):
-        return filter(lambda i : i[0] not in self.__class__.PRIVATE_KEYS, self.df.items())
+        return filter(lambda i : i[0] not in self.__class__.PRIVATE_KEYS, self._df.items())
 
     def keys(self):
-        return filter(lambda k : k not in self.__class__.PRIVATE_KEYS, self.df.keys())
+        return filter(lambda k : k not in self.__class__.PRIVATE_KEYS, self._df.keys())
 
     def save(self, hdf_path):
         if os.path.splitext(hdf_path)[1] != '.h5':
@@ -56,9 +56,9 @@ class DataFrameCollection(object):
         if os.path.exists(hdf_path):
             logging.info('Overwriting %s' % hdf_path)
             os.remove(hdf_path)
-        if len(self.df) == 0:
+        if len(self._df) == 0:
             logging.warn('Will not save empty DataFrameCollection')
-        for k,v in self.df.items():
+        for k,v in self._df.items():
             logging.info('Saving %s' % k)
             v.to_hdf(hdf_path, key=k, mode='a')
 
@@ -70,4 +70,4 @@ class DataFrameCollection(object):
             self.drop()
             for k in store.keys():
                 logging.info('Loading %s' % k)
-                self.df[k] = store[k]
+                self._df[k] = store[k]
