@@ -90,7 +90,7 @@ def mpl_render(render_path, data_path):
     pass
 
 if __name__ == '__main__':
-    import argparse, sys, os
+    import argparse, sys, os, logging
     parser = argparse.ArgumentParser(
         description="Render from image",
     )
