@@ -89,12 +89,14 @@ CAST = {
     'const char *' : try_str_except_int,
     'char *' : try_str_except_int,
     'char[16]' : str,
+    'char[32]' : str,
     '__data_loc char[]' : str,
     'enum hrtimer_mode' : int,
 }
 
-def NOT_IN_CAST(t):
-    logging.warn("'%s' not in CAST" % (t))
+def DEFAULT_CAST(t):
+    if t not in CAST:
+        logging.warn("'%s' not in CAST" % (t))
     return int
 
 def typeof(key, event):
@@ -117,7 +119,7 @@ def event_to_dict(event):
         ]
     })
     ret.update({
-        key:CAST.get(typeof(key,event), NOT_IN_CAST(typeof(key,event)))(event[str(key)])
+        key:CAST.get(typeof(key,event), DEFAULT_CAST(typeof(key,event)))(event[str(key)])
         for key in event.keys()
     })
     if ret['event'] in EXTRA:
