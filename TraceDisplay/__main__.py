@@ -55,7 +55,7 @@ class TestDataFrameCollection(unittest.TestCase):
         pass
     def test_set_get(self):
         dfc = DataFrameCollection()
-        for k,v in randomDictOfDataFrame():
+        for k,v in randomDictOfDataFrame().items():
             dfc[k] = v
             assert v is dfc[k]
         pass
