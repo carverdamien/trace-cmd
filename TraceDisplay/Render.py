@@ -64,7 +64,7 @@ def mpl_render(render_path, data_path):
     dpi = 100
     figsize = (6.4, 4.8)
     # print(dpi, ypixels)
-    if dpi > ypixels:
+    if dpi < ypixels:
         dpi = ypixels
     assert dpi % ypixels == 0
     # scale = 160.
