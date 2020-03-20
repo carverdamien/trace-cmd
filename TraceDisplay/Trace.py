@@ -74,6 +74,7 @@ def try_str_except_int(x):
         return int(x)
 
 CAST = {
+    'unsigned long[6]' : int,
     'unsigned long' : int,
     's64' : int,
     'void *' : int,
