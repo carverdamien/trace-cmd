@@ -90,8 +90,25 @@ def mpl_render(render_path, data_path):
     pass
 
 if __name__ == '__main__':
-    print('plotly_render')
-    plotly_render('./img.html', './img.h5')
-    print('mpl_render')
-    mpl_render('./img.png', './img.h5')
-    # main('./rqsize.png', './rqsize.h5')
+    import argparse, sys, os
+    parser = argparse.ArgumentParser(
+        description="Render from image",
+    )
+    parser.add_argument("render_path",
+                        type=str,
+                        help="path to render output file",
+    )
+    parser.add_argument("image_path",
+                        type=str,
+                        help="path to the image input file",
+    )
+    parser.add_argument("--force","-f",
+                        action="store_true",
+                        help="ignore checks. overwrite output file if it already exists",
+    )
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.DEBUG)
+    if os.path.splitext(args.render_path)[1] == '.html':
+        plotly_render(args.render_path, args.image_path)
+    else:
+        mpl_render(args.render_path, args.image_path)
