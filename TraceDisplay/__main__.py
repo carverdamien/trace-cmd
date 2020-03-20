@@ -44,7 +44,7 @@ def randomDataFrame(nr_rows=NR_SCALE, nr_cols=NR_SCALE, dtype=[int, float, str])
 
 def randomDictOfDataFrame(nr_keys=NR_SCALE, nr_rows=NR_SCALE, nr_cols=NR_SCALE):
     return {
-        'key%d' : randomDataFrame(nr_rows, nr_col)
+        'key%d' : randomDataFrame(nr_rows, nr_cols)
         for k in range(nr_keys)
     }
 
