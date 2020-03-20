@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from Trace import Trace
 from Image import Image
-from Render import mpl_render
+from Render import mpl_render, plotly_render
 from DataFrameCollection import DataFrameCollection
 
 NR_SCALE = 10
