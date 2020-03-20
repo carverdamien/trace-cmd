@@ -74,10 +74,9 @@ def try_str_except_int(x):
         return int(x)
 
 CAST = {
-    'unsigned long[6]' : lambda x : str(x.data[:]),
+    # int
     'unsigned long' : int,
     's64' : int,
-    'void *' : int,
     'long' : int,
     'u32' : int,
     'u64' : int,
@@ -86,21 +85,36 @@ CAST = {
     'unsigned int' : int,
     'pid_t' : int,
     'size_t' : int,
-    'const void *' : int,
-    'struct page *' : int,
     'gfp_t' : int,
     'bool' : int,
-    'u32 *' : int,
     'clockid_t' : int,
     'umode_t' : int,
+    'enum hrtimer_mode' : int,
+    'dev_t' : int,
+    'ino_t' : int,
+    'ext4_lblk_t' : int,
+    'char' : int,
+    'short' : int,
+
+    'struct fpu *' : int,
+    'const void *' : int,
+    'struct page *' : int,
+    'u32 *' : int,
     'struct stat *' : int,
     'const char * const *' : int,
+    'void *' : int,
+
+    # str except int
     'const char *' : try_str_except_int,
     'char *' : try_str_except_int,
+
+    # str
     'char[16]' : str,
     'char[32]' : str,
     '__data_loc char[]' : str,
-    'enum hrtimer_mode' : int,
+
+    # data
+    'unsigned long[6]' : lambda x : str(x.data[:]),
 }
 
 def DEFAULT_CAST(t):
