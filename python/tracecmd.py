@@ -73,7 +73,7 @@ class Event(object, DictMixin):
         f = tep_find_field(self._format, n)
         if f is None:
             raise KeyError("no field '%s'" % n)
-        return Field(self._record, f)
+        return Field(n, self._record, f)
 
     def keys(self):
         return py_format_get_keys(self._format)
@@ -132,7 +132,8 @@ class FieldError(Exception):
     pass
 
 class Field(object):
-    def __init__(self, record, field):
+    def __init__(self, name, record, field):
+        self._name = name
         self._record = record
         self._field = field
 
@@ -144,7 +145,7 @@ class Field(object):
         ret, val =  tep_read_number_field(self._field,
                                           tep_record_data_get(self._record))
         if ret:
-            raise FieldError("Not a number field")
+            raise FieldError("Field %s is not a number field" % (self._name))
         return val
     __int__ = __long__
 
