@@ -36,7 +36,7 @@ class TestTrace(unittest.TestCase):
             i.build(t)
             i.save(img_path)
             mpl_render(mpl_render_path, img_path)
-            mpl_render(plotly_render_path, img_path)
+            plotly_render(plotly_render_path, img_path)
             count += 1
         self.assertTrue(count>0)
 
