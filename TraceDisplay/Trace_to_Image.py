@@ -2,23 +2,14 @@
 import logging
 import os
 from Trace import Trace
-from Image import Image, Shapes_from
+from Image import Image
 
 def main(image_path, trace_path, shape_paths):
-    shapes = []
-    for shape_path in shape_paths:
-        shapes += Shapes_from(shape_path)
-    if len(shapes) == 0:
-        logging.error('No shapes where found')
-        sys.exit(1)
-    else:
-        for shape in shapes:
-            logging.info('Found shape %s' % shape[0])
-        logging.info('Found %d shapes' % len(shapes))
+    # TODO: use shape_paths
     t = Trace()
     t.load(trace_path)
     i = Image()
-    i.build(t, shapes)
+    i.build(t)
     i.save(image_path)
     pass
 
@@ -37,7 +28,7 @@ if __name__ == '__main__':
     )
     parser.add_argument("shape_paths",
                         type=str,
-                        nargs='+',
+                        nargs='*',
                         help="paths to the shape building rules",
     )
     parser.add_argument("--force","-f",
