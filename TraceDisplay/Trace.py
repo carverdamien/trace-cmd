@@ -77,6 +77,7 @@ CAST = {
     'long' : int,
     'u64' : int,
     'int' : int,
+    'unsinged' : int,
     'unsigned int' : int,
     'pid_t' : int,
     'size_t' : int,
