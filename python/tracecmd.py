@@ -145,7 +145,8 @@ class Field(object):
         ret, val =  tep_read_number_field(self._field,
                                           tep_record_data_get(self._record))
         if ret:
-            raise FieldError("Field %s is not a number field" % (self._name))
+            fmt = tep_format_field_type_get(self._field)
+            raise FieldError("Field '%s' is not a number field. It is '%s'" % (self._name, fmt))
         return val
     __int__ = __long__
 
