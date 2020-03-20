@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from Trace import Trace
 from Image import Image
-from Render import render
+from Render import mpl_render
 from DataFrameCollection import DataFrameCollection
 
 NR_SCALE = 10
@@ -22,18 +22,19 @@ class TestTrace(unittest.TestCase):
         WALK_PATH = os.environ.get('WALK_PATH', '.')
         count = 0
         for trace_path in find(WALK_PATH, '.*.dat$'):
-            hdf_path = os.path.splitext(trace_path)[0] + '.h5'
-            img_path = os.path.splitext(trace_path)[0] + '.i.h5'
-            render_path = os.path.splitext(trace_path)[0] + '.png'
+            no_ext_path = os.path.splitext(trace_path)[0]
+            hdf_path = no_ext_path + '.h5'
+            img_path = no_ext_path + '.i.h5'
+            mpl_render_path = no_ext_path + '.png'
+            timeline_path = no_ext_path + '.csv'
             t = Trace()
             t.load(trace_path)
-            print(t.timeline(0, 10))
+            t.timeline(0, 10).to_csv(timeline_path)
             t.save(hdf_path)
             i = Image()
             i.build(t)
             i.save(img_path)
-            print(i.line())
-            render(render_path, img_path)
+            mpl_render(mpl_render_path, img_path)
             count += 1
         self.assertTrue(count>0)
 

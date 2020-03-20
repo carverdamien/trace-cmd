@@ -1,13 +1,12 @@
 #!/usr/bin/env python2.7
-import pandas as pd
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
 import numpy as np
 from Image import Image
 
-def render(render_path, data_path):
+def mpl_render(render_path, data_path):
+    import matplotlib as mpl
+    mpl.use('Agg')
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import LineCollection
     image = Image()
     image.load(data_path)
     # print(image)
@@ -49,5 +48,5 @@ def render(render_path, data_path):
     pass
 
 if __name__ == '__main__':
-    render('./img.png', './img.h5')
+    mpl_render('./img.png', './img.h5')
     # main('./rqsize.png', './rqsize.h5')
