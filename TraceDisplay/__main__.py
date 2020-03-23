@@ -74,7 +74,7 @@ class TestDataFrameCollection(unittest.TestCase):
         dfc = DataFrameCollection()
         for k,v in randomDictOfDataFrame().items():
             dfc[k] = v
-            assert v is dfc[k]
+            assert v.equals(dfc[k])
         pass
     def test_set_fails_if_not_DataFrame(self):
         dfc = DataFrameCollection()

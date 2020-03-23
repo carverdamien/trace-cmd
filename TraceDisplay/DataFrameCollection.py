@@ -35,6 +35,7 @@ class DataFrameCollection(object):
             do(k,v)
 
     def __getitem__(self, k, private_key=False):
+        """Read Only"""
         if k[0] != '/':
             k = '/'+k
         assert private_key or k not in self.__class__.PRIVATE_KEYS
@@ -44,7 +45,7 @@ class DataFrameCollection(object):
         if query:
             return self._df[k].query(query)
         else:
-            return self._df[k]
+            return self._df[k].copy()
 
     def __setitem__(self, k, v, private_key=False):
         assert isinstance(k, str)
@@ -53,7 +54,7 @@ class DataFrameCollection(object):
         assert private_key or k not in self.__class__.PRIVATE_KEYS
         assert isinstance(v, pd.DataFrame)
         self._df[k] = v
-        if k not in self._df.get('/filter', pd.DataFrame()).index.values:
+        if k not in self._df.setdefault('/filter', pd.DataFrame()).index.values:
             self._df['/filter'] = self._df['/filter'].append(
                 pd.DataFrame({'query':['']},index=[k]),
                 verify_integrity=True,
