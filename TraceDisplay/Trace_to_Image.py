@@ -1,8 +1,8 @@
 #!/usr/bin/env python2.7
 import logging
 import os
-from Trace import Trace
-from Image import Image
+from TraceDisplay import Trace
+from TraceDisplay import Image
 
 def main(image_path, trace_path, shape_paths):
     # TODO: use shape_paths
