@@ -17,7 +17,7 @@ COPY COPYING COPYING.LIB DCO features.mk LICENSES Makefile README ./
 ENV PYTHON_VERS python3
 RUN make \
 &&  make install_python \
-&&  cp -vn /usr/local/lib/trace-cmd/python/* /usr/local/lib/python2.7/
+&&  cp -vn /usr/local/lib/trace-cmd/python/* /usr/local/lib/python3.7/
 COPY TraceDisplay/pip3.install.txt TraceDisplay/pip3.install.txt
 RUN pip3 install -r TraceDisplay/pip3.install.txt
 COPY TraceDisplay TraceDisplay
