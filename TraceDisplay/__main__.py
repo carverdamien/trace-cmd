@@ -54,6 +54,18 @@ def randomDictOfDataFrame(nr_keys=NR_SCALE, nr_rows=NR_SCALE, nr_cols=NR_SCALE):
         for k in range(nr_keys)
     }
 
+def seqDataFrame(nr_rows=NR_SCALE, nr_cols=NR_SCALE, dtype=[int, float]):
+    return pd.DataFrame({
+        'col%d' % (c) : np.arange(nr_rows, dtype=dtype[np.random.randint(len(dtype))])
+        for c in range(nr_cols)
+    })
+
+def seqDictOfDataFrame(nr_keys=NR_SCALE, nr_rows=NR_SCALE, nr_cols=NR_SCALE):
+    return {
+        'key%d' : seqDataFrame(nr_rows, nr_cols)
+        for k in range(nr_keys)
+    }
+
 class TestDataFrameCollection(unittest.TestCase):
     def test_init(self):
         DataFrameCollection(randomDictOfDataFrame())
@@ -80,6 +92,17 @@ class TestDataFrameCollection(unittest.TestCase):
                 foo = i[k]
             self.assertRaises(Exception, get_fails)
         pass
+    def test_query(self):
+        dfc = DataFrameCollection(seqDictOfDataFrame())
+        for k in dfc:
+            dfc.query(k, 'col0 == 0')
+            self.assertEqual(len(dfc[k]), 1)
+        dfc.query({
+            k : 'col0 == 0 | col0 == 1'
+            for k in dfc
+        })
+        for k in dfc:
+            self.assertEqual(len(dfc[k]), 2)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)

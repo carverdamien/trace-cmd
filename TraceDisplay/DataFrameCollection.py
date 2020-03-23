@@ -11,9 +11,11 @@ class FileExtensionError(Exception):
     pass
 
 class DataFrameCollection(object):
-    PRIVATE_KEYS = []
+    PRIVATE_KEYS = ['/filter']
     def __init__(self,dict_of_data_frames={}):
-        self._df = {}
+        self._df = {
+            '/filter' : pd.DataFrame(),
+        }
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames.items():
             self[k] = v
@@ -21,18 +23,41 @@ class DataFrameCollection(object):
     def drop(self):
         self._df = {}
 
+    def query(self, k, v=None):
+        def do(k,v):
+            assert isinstance(v, str)
+            assert k in self
+            self._df['/filter'].loc[k]['query'] = v
+        if v is None:
+            assert isinstance(k, dict)
+            for k,v in k.items():
+                do(k,v)
+        else:
+            assert k is not None and v is not None
+            do(k,v)
+
     def __getitem__(self, k, private_key=False):
         if k[0] != '/':
             k = '/'+k
         assert private_key or k not in self.__class__.PRIVATE_KEYS
-        return self._df[k]
+        query = self._df['/filter'].loc[k]['query']
+        if query:
+            return self._df[k].query(query)
+        else:
+            return self._df[k]
 
     def __setitem__(self, k, v, private_key=False):
+        assert isinstance(k, str)
         if k[0] != '/':
             k = '/'+k
         assert private_key or k not in self.__class__.PRIVATE_KEYS
         assert isinstance(v, pd.DataFrame)
         self._df[k] = v
+        if k not in self._df['/filter'].index.values:
+            self._df['/filter'] = self._df['/filter'].append(
+                pd.DataFrame({'query':['']},index=[k]),
+                verify_integrity=True,
+            )
 
     def __iter__(self):
         return iter(filter(lambda k : k not in self.__class__.PRIVATE_KEYS, iter(self._df)))
