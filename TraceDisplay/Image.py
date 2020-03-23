@@ -167,11 +167,10 @@ class Image(DataFrameCollection):
         else:
             raise Exception('TODO')
         category = self.__getitem__('/category', private_key=True)
-        for c in category:
-            i = c.index
+        for i, c in category.iterrows():
             query = json.loads(c['query'])
-            for k in keys:
-                self.loc[k, self.eval(query[k]), ['category']] = i
+            for k in query:
+                self.loc[k, self.eval(k, query[k]), ['category']] = i
 
     def line(self):
         def df(k):
