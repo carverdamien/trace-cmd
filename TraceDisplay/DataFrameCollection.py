@@ -10,16 +10,28 @@ class FileExtensionError(Exception):
         self.expected_extension = expected_extension
     pass
 
+class Loc(object):
+    def __init__(self, df):
+        self.df = df
+    def __setitem__(self, k, v):
+        k, i, c, = k
+        self.df[k].loc[i,c] = v
+    def __getitem__(self, k):
+        k,i,c = k
+        return self.df[k].loc[i,c]
+
 class DataFrameCollection(object):
     PRIVATE_KEYS = ['/filter']
     def __init__(self,dict_of_data_frames={}):
         self._df = {}
+        self.loc = Loc(self._df)
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames.items():
             self[k] = v
 
     def drop(self):
         self._df = {}
+        self.loc.df = self._df
 
     def query(self, k, v=None):
         def do(k,v):

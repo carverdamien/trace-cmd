@@ -50,7 +50,7 @@ def randomDataFrame(nr_rows=NR_SCALE, nr_cols=NR_SCALE, dtype=[int, float, str])
 
 def randomDictOfDataFrame(nr_keys=NR_SCALE, nr_rows=NR_SCALE, nr_cols=NR_SCALE):
     return {
-        'key%d' : randomDataFrame(nr_rows, nr_cols)
+        'key%d' % (k) : randomDataFrame(nr_rows, nr_cols)
         for k in range(nr_keys)
     }
 
@@ -62,7 +62,7 @@ def seqDataFrame(nr_rows=NR_SCALE, nr_cols=NR_SCALE, dtype=[int, float]):
 
 def seqDictOfDataFrame(nr_keys=NR_SCALE, nr_rows=NR_SCALE, nr_cols=NR_SCALE):
     return {
-        'key%d' : seqDataFrame(nr_rows, nr_cols)
+        'key%d' % (k) : seqDataFrame(nr_rows, nr_cols)
         for k in range(nr_keys)
     }
 
@@ -103,6 +103,11 @@ class TestDataFrameCollection(unittest.TestCase):
         })
         for k in dfc:
             self.assertEqual(len(dfc[k]), 2)
+    def test_loc(self):
+        dfc = DataFrameCollection(seqDictOfDataFrame())
+        self.assertTrue(np.allclose(dfc.loc['/key0',[0],['col0']],0))
+        dfc.loc['/key0',[0],['col0']] = -1
+        self.assertTrue(np.allclose(dfc.loc['/key0',[0],['col0']],-1))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
