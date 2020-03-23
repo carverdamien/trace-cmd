@@ -1,4 +1,4 @@
-from DataFrameCollection import DataFrameCollection, FileExtensionError
+from .DataFrameCollection import DataFrameCollection, FileExtensionError
 import os
 import logging
 import pandas as pd

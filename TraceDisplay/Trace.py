@@ -1,4 +1,4 @@
-from DataFrameCollection import DataFrameCollection, FileExtensionError
+from .DataFrameCollection import DataFrameCollection, FileExtensionError
 import os
 import tracecmd
 import pandas as pd
