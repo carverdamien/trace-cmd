@@ -13,9 +13,7 @@ class FileExtensionError(Exception):
 class DataFrameCollection(object):
     PRIVATE_KEYS = ['/filter']
     def __init__(self,dict_of_data_frames={}):
-        self._df = {
-            '/filter' : pd.DataFrame(),
-        }
+        self._df = {}
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames.items():
             self[k] = v
@@ -40,6 +38,8 @@ class DataFrameCollection(object):
         if k[0] != '/':
             k = '/'+k
         assert private_key or k not in self.__class__.PRIVATE_KEYS
+        if k not in self._df:
+            raise KeyError()
         query = self._df['/filter'].loc[k]['query']
         if query:
             return self._df[k].query(query)
@@ -53,7 +53,7 @@ class DataFrameCollection(object):
         assert private_key or k not in self.__class__.PRIVATE_KEYS
         assert isinstance(v, pd.DataFrame)
         self._df[k] = v
-        if k not in self._df['/filter'].index.values:
+        if k not in self._df.get('/filter', pd.DataFrame()).index.values:
             self._df['/filter'] = self._df['/filter'].append(
                 pd.DataFrame({'query':['']},index=[k]),
                 verify_integrity=True,
