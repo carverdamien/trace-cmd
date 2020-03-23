@@ -61,7 +61,7 @@ jobs:
       - name: Test NoteBook
         uses: ./
         with:
-          bash: 'jupyter nbconvert --to html --execute TraceDisplay/TestNotebook.ipynb --output=artifacts/TestNotebook.html'
+          bash: 'jupyter nbconvert --to html --execute TestNotebook.ipynb --output=artifacts/TestNotebook.html'
       - name: Upload small-sched-trace.h5
         uses: actions/upload-artifact@v1
         with:
