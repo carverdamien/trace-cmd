@@ -108,7 +108,24 @@ class TestDataFrameCollection(unittest.TestCase):
         self.assertTrue(np.allclose(dfc.loc['/key0',[0],['col0']],0))
         dfc.loc['/key0',[0],['col0']] = -1
         self.assertTrue(np.allclose(dfc.loc['/key0',[0],['col0']],-1))
-
+    def test_query(self):
+        dfc = DataFrameCollection(seqDictOfDataFrame())
+        for k in dfc:
+            self.assertEqual(len(dfc.query(k, 'col0 == 0')), 1)
+        for k,v in dfc.query({
+            k : '(col0 == 0) | (col0 == 1)'
+            for k in dfc
+        }).items():
+            self.assertEqual(len(v), 2)
+    def test_eval(self):
+        dfc = DataFrameCollection(seqDictOfDataFrame())
+        for k in dfc:
+            self.assertEqual(len(dfc.eval(k, 'col0[col0 == 0]')), 1)
+        for k,v in dfc.eval({
+            k : 'col0[(col0 == 0) | (col0 == 1)]'
+            for k in dfc
+        }).items():
+            self.assertEqual(len(v), 2)
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     unittest.main()

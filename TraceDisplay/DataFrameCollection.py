@@ -33,6 +33,28 @@ class DataFrameCollection(object):
         self._df = {}
         self.loc.df = self._df
 
+    def query(self, k, v=None):
+        if v is None:
+            assert isinstance(k, dict)
+            return {
+                _k : self._df[_k].query(k[_k])
+                for _k in k
+            }
+        else:
+            assert k is not None and v is not None
+            return self._df[k].query(v)
+
+    def eval(self, k, v=None):
+        if v is None:
+            assert isinstance(k, dict)
+            return {
+                _k : self._df[_k].eval(k[_k])
+                for _k in k
+            }
+        else:
+            assert k is not None and v is not None
+            return self._df[k].eval(v)
+
     def filter(self, k, v=None):
         def do(k,v):
             assert isinstance(v, str)
