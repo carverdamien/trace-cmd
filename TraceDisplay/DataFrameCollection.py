@@ -33,7 +33,7 @@ class DataFrameCollection(object):
         self._df = {}
         self.loc.df = self._df
 
-    def query(self, k, v=None):
+    def filter(self, k, v=None):
         def do(k,v):
             assert isinstance(v, str)
             assert k in self
