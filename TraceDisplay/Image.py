@@ -4,6 +4,7 @@ import logging
 import pandas as pd
 import numpy as np
 import itertools
+import json
 
 class Shape(object):
     """AbstractShape"""
@@ -114,14 +115,14 @@ class DefaultCategory(object):
     def __call__(self, image):
         data = []
         index = []
-        columns = ['color', 'label']
+        columns = ['color', 'label', 'query']
         category = 0
-        for k,v in image.items():
+        for k in image:
             index.append(category)
             color = next(self.color)
             label = k
-            v['category'] = category
-            data.append([color, label])
+            query = json.dumps({k:'category != %d' % category})
+            data.append([color, label, query])
             category+=1
         return pd.DataFrame(data, index=index, columns=columns)
 
@@ -153,6 +154,8 @@ class Image(DataFrameCollection):
         self.drop()
         if shape is None:
             shape = DefaultShapeCollection(trace)
+        else:
+            raise Exception('TODO')
         assert isinstance(shape, ShapeCollection)
         self.__setitem__('/shape', shape.to_DataFrame(), private_key=True)
         # TODO: in parallel
@@ -160,8 +163,15 @@ class Image(DataFrameCollection):
             logging.info('Building %s' % k)
             self[k] = pd.DataFrame(v(trace))
         if category is None:
-            category = DefaultCategory
-        self.__setitem__('/category', DefaultCategory()(self), private_key=True)
+            self.__setitem__('/category', DefaultCategory()(self), private_key=True)
+        else:
+            raise Exception('TODO')
+        category = self.__getitem__('/category', private_key=True)
+        for c in category:
+            i = c.index
+            query = json.loads(c['query'])
+            for k in keys:
+                self.loc[k, self.eval(query[k]), ['category']] = i
 
     def line(self):
         def df(k):
