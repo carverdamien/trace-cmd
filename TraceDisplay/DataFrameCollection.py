@@ -130,4 +130,4 @@ class DataFrameCollection(object):
             self.drop()
             for k in store.keys():
                 logging.info('Loading %s' % k)
-                self._df[k] = store[k]
+                self.__setitem__(k, store[k], True)
