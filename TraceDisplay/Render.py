@@ -88,6 +88,7 @@ def bokeh_render(render_path, data_path):
     with open(render_path, "w") as f:
         f.write(file_html(doc, INLINE, data_path))
     logging.info("Wrote %s" % render_path)
+    return file_html(doc, INLINE, data_path)
     pass
 
 def plotly_render(render_path, data_path):

@@ -54,10 +54,14 @@ jobs:
         with:
           name: small-full-trace.dat
           path: artifacts
-      - name: Docker build and test
+      - name: Test TraceDisplay
         uses: ./
         with:
           bash: 'python -m TraceDisplay'
+      - name: Test NoteBook
+        uses: ./
+        with:
+          bash: 'jupyter nbconvert --to html --execute TraceDisplay/TestNotebook.ipynb --output=artifacts/TestNotebook.html'
       - name: Upload small-sched-trace.h5
         uses: actions/upload-artifact@v1
         with:
