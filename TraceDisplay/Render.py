@@ -1,6 +1,82 @@
 #!/usr/bin/env python2.7
 import numpy as np
 from Image import Image
+import logging
+
+def bokeh_render(render_path, data_path):
+    from bokeh.document import Document
+    from bokeh.embed import file_html
+    from bokeh.resources import INLINE
+    from bokeh.plotting import figure
+    from bokeh.models import ColumnDataSource
+    import datashader as ds
+    import datashader.transfer_functions as tf
+
+    image = Image()
+    image.load(data_path)
+    # print(image)
+    line, color_map, label_map = image.line()
+    category = np.unique(line['category'])
+    color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
+    #print(line)
+    xmin = min(min(line['x0']), min(line['x1']))
+    xmax = max(max(line['x0']), max(line['x1']))
+    ymin = min(min(line['y0']), min(line['y1']))
+    ymax = max(max(line['y0']), max(line['y1']))
+
+    plot_width, plot_height = 800, 600
+    x_range = (xmin, xmax)
+    y_range = (ymin, ymax)
+    dw, dh = xmax - xmin, ymax - ymin
+
+    doc = Document()
+    fig = figure(
+        x_range = x_range,
+        y_range = y_range,
+        sizing_mode='stretch_both',
+    )
+    source = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
+    fig.image_rgba(
+        source=source,
+        image='image',
+        x='x',
+        y='y',
+        dw='dw',
+        dh='dh',
+        dilate=False,
+    )
+    #
+    cvs = ds.Canvas(
+        plot_width=plot_width,
+        plot_height=plot_height,
+        x_range=x_range,
+        y_range=y_range,
+    )
+    agg = cvs.line(
+        line,
+        x=['x0','x1'],
+        y=['y0','y1'],
+        agg=ds.count_cat('category'),
+        axis=1,
+    )
+    img = tf.shade(
+        agg,
+        min_alpha=255,
+        color_key=color_key,
+    )
+    source.data.update(dict(
+        image=[img.data],
+        x=[xmin],
+        y=[ymin],
+        dw=[dw],
+        dh=[dh]),
+    )
+    doc.add_root(fig)
+    doc.validate()
+    with open(render_path, "w") as f:
+        f.write(file_html(doc, INLINE, data_path))
+    logging.info("Wrote %s" % render_path)
+    pass
 
 def plotly_render(render_path, data_path):
     import plotly.graph_objs as go
@@ -92,7 +168,7 @@ def mpl_render(render_path, data_path):
     pass
 
 if __name__ == '__main__':
-    import argparse, sys, os, logging
+    import argparse, sys, os
     parser = argparse.ArgumentParser(
         description="Render from image",
     )
@@ -111,6 +187,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     if os.path.splitext(args.render_path)[1] == '.html':
-        plotly_render(args.render_path, args.image_path)
+        # plotly_render(args.render_path, args.image_path)
+        bokeh_render(args.render_path, args.image_path)
     else:
         mpl_render(args.render_path, args.image_path)

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from Trace import Trace
 from Image import Image
-from Render import mpl_render, plotly_render
+from Render import mpl_render, plotly_render, bokeh_render
 from DataFrameCollection import DataFrameCollection
 
 NR_SCALE = 10
@@ -26,7 +26,8 @@ class TestTrace(unittest.TestCase):
             hdf_path = no_ext_path + '.h5'
             img_path = no_ext_path + '.i.h5'
             mpl_render_path = no_ext_path + '.png'
-            plotly_render_path = no_ext_path + '.html'
+            plotly_render_path = no_ext_path + '.plotly.html'
+            bokeh_render_path = no_ext_path + '.bokeh.html'
             timeline_path = no_ext_path + '.csv'
             t = Trace()
             t.load(trace_path)
@@ -37,6 +38,7 @@ class TestTrace(unittest.TestCase):
             i.save(img_path)
             mpl_render(mpl_render_path, img_path)
             plotly_render(plotly_render_path, img_path)
+            bokeh_render(bokeh_render_path, img_path)
             count += 1
         self.assertTrue(count>0)
 
