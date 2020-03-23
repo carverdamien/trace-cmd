@@ -57,7 +57,7 @@ jobs:
       - name: Docker build and test
         uses: ./
         with:
-          bash: 'python TraceDisplay'
+          bash: 'python -m TraceDisplay'
       - name: Upload small-sched-trace.h5
         uses: actions/upload-artifact@v1
         with:

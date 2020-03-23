@@ -1,10 +1,10 @@
 import unittest, os, re, logging
 import numpy as np
 import pandas as pd
-from Trace import Trace
-from Image import Image
-from Render import mpl_render, plotly_render, bokeh_render
-from DataFrameCollection import DataFrameCollection
+from .Trace import Trace
+from .Image import Image
+from .Render import mpl_render, plotly_render, bokeh_render
+from .DataFrameCollection import DataFrameCollection
 
 NR_SCALE = 10
 
