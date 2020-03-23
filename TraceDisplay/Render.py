@@ -11,6 +11,8 @@ def bokeh_render(render_path, data_path):
     from bokeh.models import ColumnDataSource
     import datashader as ds
     import datashader.transfer_functions as tf
+    from bokeh.models.widgets import Div
+    from bokeh.layouts import row
 
     image = Image()
     image.load(data_path)
@@ -30,6 +32,16 @@ def bokeh_render(render_path, data_path):
     dw, dh = xmax - xmin, ymax - ymin
 
     doc = Document()
+    legend = Div(
+        visible=True,
+        height_policy='max',
+        text = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
+            [
+                '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
+                for c in category
+            ] + ['</ul>']
+        )
+    )
     fig = figure(
         x_range = x_range,
         y_range = y_range,
@@ -71,7 +83,7 @@ def bokeh_render(render_path, data_path):
         dw=[dw],
         dh=[dh]),
     )
-    doc.add_root(fig)
+    doc.add_root(row(legend, fig, sizing_mode='stretch_both',),)
     doc.validate()
     with open(render_path, "w") as f:
         f.write(file_html(doc, INLINE, data_path))
