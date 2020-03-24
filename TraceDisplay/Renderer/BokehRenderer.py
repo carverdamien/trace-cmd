@@ -1,4 +1,6 @@
 from bokeh.plotting import figure
+from bokeh.embed import file_html
+from bokeh.resources import INLINE
 from bokeh.io import show, push_notebook, output_notebook
 from bokeh.models import CustomJS, ColumnDataSource
 from ipywidgets import interact_manual
@@ -7,8 +9,6 @@ import datashader.transfer_functions as tf
 import pandas as pd
 import numpy as np
 from ..Image import Image
-
-output_notebook()
 
 BOKEH_RENDERER = {}
 FIGURE_RANGE_JSCODE = """
@@ -142,5 +142,9 @@ class BokehRenderer(object):
         pass
 
     def show(self):
+        output_notebook()
         self.notebook_handle = show(self.figure, notebook_handle=True)
         interact_manual(self.update)
+
+    def to_html(self):
+        return file_html(self.figure, INLINE, '')
