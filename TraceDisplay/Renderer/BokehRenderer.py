@@ -147,6 +147,7 @@ class BokehRenderer(object):
         # print(self.figure.y_range.start, self.figure.y_range.end)
         # print(f"{self._figure_range}")
         # print(self.colored_image._df['/filter'])
+        push_notebook(handle=self.notebook_handle) # DEBUG # TODO: rm this line
         self.updateImage()
         push_notebook(handle=self.notebook_handle)
         for func in self.notify_update:
