@@ -10,6 +10,7 @@ import datashader as ds
 import datashader.transfer_functions as tf
 import pandas as pd
 import numpy as np
+import logging
 from ..Image import Image
 
 BOKEH_RENDERER = {}
@@ -113,12 +114,14 @@ class BokehRenderer(object):
             return
         line, color_map, label_map = self.colored_image.line()
         category = np.unique(line['category'])
-        self.legend.text = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
+        text = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
             [
                 '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
                 for c in category
             ] + ['</ul>']
         )
+        logging.debug(text)
+        self.legend.text = 'DEBUG'
         push_notebook(handle=self.notebook_handle) # DEBUG # TODO: rm this line
         color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
         image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
