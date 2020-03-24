@@ -119,6 +119,7 @@ class BokehRenderer(object):
                 for c in category
             ] + ['</ul>']
         )
+        push_notebook(handle=self.notebook_handle) # DEBUG # TODO: rm this line
         color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
         image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
         self.image = image
