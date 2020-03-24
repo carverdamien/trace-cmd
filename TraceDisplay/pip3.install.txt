@@ -6,3 +6,4 @@ tables==3.6.1
 ipympl
 plotly==3.7.1
 bokeh==1.2.0
+xarray==0.12.1
