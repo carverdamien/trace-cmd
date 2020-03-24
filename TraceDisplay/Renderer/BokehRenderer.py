@@ -157,7 +157,7 @@ class BokehRenderer(object):
         pass
 
     def show(self):
-        output_notebook()
+        output_notebook(hide_banner=True)
         self.notebook_handle = show(self.row, notebook_handle=True)
         interact_manual(self.update)
 
