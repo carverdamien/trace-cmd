@@ -62,7 +62,7 @@ jobs:
         uses: ./
         with:
           bash: 'jupyter nbconvert --to html --execute TestTraceDisplay.ipynb --output=artifacts/TestTraceDisplay.html'\
-       - name: Test InteractiveNoteBook
+      - name: Test InteractiveNoteBook
         uses: ./
         with:
           bash: 'jupyter nbconvert --to html --execute TestInteractiveTraceDisplay.ipynb --output=artifacts/TestInteractiveTraceDisplay.html'
