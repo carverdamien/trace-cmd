@@ -59,7 +59,7 @@ class DataFrameCollection(object):
         def do(k,v):
             assert isinstance(v, str)
             assert k in self
-            self._df['/filter'].loc[k]['query'] = v
+            self._df['/filter'].loc[k]['filter'] = v
         if v is None:
             assert isinstance(k, dict)
             for k,v in k.items():
@@ -68,6 +68,9 @@ class DataFrameCollection(object):
             assert k is not None and v is not None
             do(k,v)
 
+    def get_filter(self):
+        return self._df['/filter'].drop(self.__class__.PRIVATE_KEYS)
+
     def __getitem__(self, k, private_key=False):
         """Read Only"""
         if k[0] != '/':
@@ -75,7 +78,7 @@ class DataFrameCollection(object):
         assert private_key or k not in self.__class__.PRIVATE_KEYS
         if k not in self._df:
             raise KeyError()
-        query = self._df['/filter'].loc[k]['query']
+        query = self._df['/filter'].loc[k]['filter']
         if query:
             return self._df[k].query(query)
         else:
@@ -88,9 +91,9 @@ class DataFrameCollection(object):
         assert private_key or k not in self.__class__.PRIVATE_KEYS
         assert isinstance(v, pd.DataFrame)
         self._df[k] = v
-        if k not in self._df.setdefault('/filter', pd.DataFrame()).index.values:
+        if k not in self._df.setdefault('/filter', pd.DataFrame({'filter':['']}, index=['/filter'])).index.values:
             self._df['/filter'] = self._df['/filter'].append(
-                pd.DataFrame({'query':['']},index=[k]),
+                pd.DataFrame({'filter':['']},index=[k]),
                 verify_integrity=True,
             )
 
