@@ -1,4 +1,6 @@
 from bokeh.plotting import figure
+from bokeh.layouts import row
+from bokeh.models.widgets import Div
 from bokeh.embed import file_html
 from bokeh.resources import INLINE
 from bokeh.io import show, push_notebook, output_notebook
@@ -57,6 +59,11 @@ class BokehRenderer(object):
             y_range = y_range,
             sizing_mode='stretch_both',
         )
+        self.legend = Div(
+            visible=True,
+            height_policy='max',
+        )
+        self.row = row(self.legend, self.figure, sizing_mode='stretch_both')
         self._figure_range = {
             'x': {'start':x_range[0], 'end':x_range[1]},
             'y': {'start':y_range[0], 'end':y_range[1]},
@@ -106,6 +113,12 @@ class BokehRenderer(object):
             return
         line, color_map, label_map = self.colored_image.line()
         category = np.unique(line['category'])
+        self.legend.text = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
+            [
+                '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
+                for c in category
+            ] + ['</ul>']
+        )
         color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
         image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
         self.image = image
@@ -129,8 +142,10 @@ class BokehRenderer(object):
         self.figure.x_range.end = self._figure_range['x']['end']
         self.figure.y_range.start = self._figure_range['y']['start']
         self.figure.y_range.end = self._figure_range['y']['end']
-        print(self.figure.x_range.start, self.figure.x_range.end)
-        print(self.figure.y_range.start, self.figure.y_range.end)
+        # print(self.figure.x_range.start, self.figure.x_range.end)
+        # print(self.figure.y_range.start, self.figure.y_range.end)
+        # print(f"{self._figure_range}")
+        # print(self.colored_image._df['/filter'])
         self.updateImage()
         push_notebook(handle=self.notebook_handle)
         for func in self.notify_update:
@@ -143,8 +158,8 @@ class BokehRenderer(object):
 
     def show(self):
         output_notebook()
-        self.notebook_handle = show(self.figure, notebook_handle=True)
+        self.notebook_handle = show(self.row, notebook_handle=True)
         interact_manual(self.update)
 
     def to_html(self):
-        return file_html(self.figure, INLINE, '')
+        return file_html(self.row, INLINE, '')
