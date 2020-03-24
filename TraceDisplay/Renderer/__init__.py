@@ -1,1 +1,1 @@
-from BokehRenderer import BokehRenderer, BOKEH_RENDERER
+from .BokehRenderer import BokehRenderer, BOKEH_RENDERER

@@ -6,7 +6,7 @@ import datashader as ds
 import datashader.transfer_functions as tf
 import pandas as pd
 import numpy as np
-from ..ColoredImage import ColoredImage
+from ..Image import Image
 
 output_notebook()
 
@@ -34,7 +34,7 @@ def default_rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, col
     agg = cvs.line(line,
                    x=['x0','x1'],
                    y=['y0','y1'],
-                   agg=ds.count_cat('color'),
+                   agg=ds.count_cat('category'),
                    axis=1,
     )
     image = tf.shade(agg,
@@ -90,7 +90,7 @@ class BokehRenderer(object):
         })
 
     def render(self, ci):
-        assert isinstance(ci, ColoredImage)
+        assert isinstance(ci, Image)
         self.colored_image = ci
         self.reset_ranges()
         self.update()
@@ -104,7 +104,9 @@ class BokehRenderer(object):
         dw, dh = xmax - xmin, ymax - ymin
         if self.colored_image is None:
             return
-        line, color_key = self.colored_image.get_line_and_color_key()
+        line, color_map, label_map = self.colored_image.line()
+        category = np.unique(line['category'])
+        color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
         image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
         self.image = image
         self.source.data.update(dict(image=[image.data],
