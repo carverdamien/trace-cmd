@@ -12,8 +12,8 @@ output_notebook()
 
 BOKEH_RENDERER = {}
 FIGURE_RANGE_JSCODE = """
-var brid = "%r";
-var ax   = "%r";
+var brid = "%s";
+var ax   = "%s";
 var notebook = Jupyter.notebook;
 var start = cb_obj.start;
 var end = cb_obj.end;
