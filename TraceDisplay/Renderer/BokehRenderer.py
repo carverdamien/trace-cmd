@@ -61,9 +61,9 @@ class BokehRenderer(object):
         )
         self.legend = Div(
             visible=True,
-            height_policy='max',
+            height_policy='fit',
         )
-        self.row = row(self.legend, self.figure, sizing_mode='stretch_both')
+        self.row = row(self.figure, self.legend, sizing_mode='stretch_both')
         self._figure_range = {
             'x': {'start':x_range[0], 'end':x_range[1]},
             'y': {'start':y_range[0], 'end':y_range[1]},
@@ -113,15 +113,14 @@ class BokehRenderer(object):
             return
         line, color_map, label_map = self.colored_image.line()
         category = np.unique(line['category'])
-        text = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
+        legend = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
             [
                 '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
                 for c in category
             ] + ['</ul>']
         )
-        print(text)
-        self.legend.text = 'DEBUG'
-        push_notebook(handle=self.notebook_handle) # DEBUG # TODO: rm this line
+        legend = '<div style="overflow:scroll; max-height: 45em;">'+ legend +'</div>'
+        self.legend.text = legend
         color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
         image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
         self.image = image
@@ -149,7 +148,6 @@ class BokehRenderer(object):
         # print(self.figure.y_range.start, self.figure.y_range.end)
         # print(f"{self._figure_range}")
         # print(self.colored_image._df['/filter'])
-        push_notebook(handle=self.notebook_handle) # DEBUG # TODO: rm this line
         self.updateImage()
         push_notebook(handle=self.notebook_handle)
         for func in self.notify_update:
