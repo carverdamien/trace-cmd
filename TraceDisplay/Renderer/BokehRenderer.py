@@ -10,7 +10,6 @@ import datashader as ds
 import datashader.transfer_functions as tf
 import pandas as pd
 import numpy as np
-import logging
 from ..Image import Image
 
 BOKEH_RENDERER = {}
@@ -120,7 +119,7 @@ class BokehRenderer(object):
                 for c in category
             ] + ['</ul>']
         )
-        logging.debug(text)
+        print(text)
         self.legend.text = 'DEBUG'
         push_notebook(handle=self.notebook_handle) # DEBUG # TODO: rm this line
         color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
