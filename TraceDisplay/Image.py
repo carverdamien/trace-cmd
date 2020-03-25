@@ -157,7 +157,6 @@ class Image(DataFrameCollection):
                 assert category in self.__getitem__('/category', private_key=True).index.values
 
     def build(self, trace, shape=None, category=None):
-        self.drop()
         if shape is None:
             shape = DefaultShapeCollection(trace)
         else:

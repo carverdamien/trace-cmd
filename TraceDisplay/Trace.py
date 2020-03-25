@@ -17,7 +17,6 @@ class Trace(DataFrameCollection):
         elif os.path.splitext(path)[1] != '.dat':
             raise FileExtensionError(path, '.dat')
         df = {}
-        self.drop()
         trace = tracecmd.Trace(path)
         # TODO: in parallel
         for cpu in range(trace.cpus):

@@ -99,10 +99,6 @@ class DataFrameCollection(object):
             k = '/'+k
         return k
 
-    def drop(self):
-        self._df = {}
-        self.loc.df = self._df
-
     def query(self, k, v=None):
         if v is None:
             assert isinstance(k, dict)
@@ -187,7 +183,6 @@ class DataFrameCollection(object):
             raise FileExtensionError(hdf_path, '.h5')
         with pd.HDFStore(hdf_path) as store:
             logging.info('Loading %s' % hdf_path)
-            self.drop()
             for k in store.keys():
                 logging.info('Loading %s' % k)
                 self.__setitem__(k, store[k], True)
