@@ -7,3 +7,4 @@ ipympl
 plotly==3.7.1
 bokeh==1.2.0
 xarray==0.12.1
+nbconvert==5.6.1

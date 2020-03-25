@@ -1,0 +1,4 @@
+711c711
+<         if self.store_widget_state and 'state' in data:  # ignore custom msg'es
+---
+>         if self.store_widget_state and isinstance(data, dict) and 'state' in data:  # ignore custom msg'es

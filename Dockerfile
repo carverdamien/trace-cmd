@@ -21,5 +21,6 @@ RUN make \
 COPY TraceDisplay/pip3.install.txt TraceDisplay/pip3.install.txt
 RUN pip3 install -r TraceDisplay/pip3.install.txt
 COPY TraceDisplay TraceDisplay
+RUN patch /usr/local/lib/python3.7/site-packages/nbconvert/preprocessors/execute.py TraceDisplay/nbconvert.patch
 ENTRYPOINT [ "TraceDisplay/entrypoint.sh" ]
 EXPOSE 443
