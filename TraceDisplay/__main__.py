@@ -95,9 +95,9 @@ class TestDataFrameCollection(unittest.TestCase):
     def test_filter(self):
         dfc = DataFrameCollection(seqDictOfDataFrame())
         for k in dfc:
-            dfc.filter(k, 'col0 == 0')
+            dfc.filter[k] = 'col0 == 0'
             self.assertEqual(len(dfc[k]), 1)
-        dfc.filter({
+        dfc.filter.update({
             k : 'col0 == 0 | col0 == 1'
             for k in dfc
         })
