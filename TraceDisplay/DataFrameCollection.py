@@ -20,11 +20,72 @@ class Loc(object):
         k,i,c = k
         return self.df[k].loc[i,c]
 
+class MetaDataFrame(object):
+    def __init__(self, dfc):
+        assert isinstance(dfc, DataFrameCollection)
+        assert not hasattr(dfc, self.__class__.ATTR)
+        assert self.__class__.KEY not in dfc.private_key
+        setattr(dfc, self.__class__.ATTR, self)
+        dfc.private_key.append(self.__class__.KEY)
+        self._dfc = dfc
+
+class FilterDataFrame(MetaDataFrame):
+    ATTR = 'filter'
+    KEY  = '/filter'
+    def __init__(self, dfc):
+        super(FilterDataFrame, self).__init__(dfc)
+        self._dfc__getitem__ = dfc.__getitem__
+        dfc.__getitem__ = self.__filtered__getitem__
+        self._set_df(pd.DataFrame({self.__class__.ATTR:['']}, index=[self.__class__.KEY]))
+    def __filtered__getitem__(self, k, private_key=False):
+        query = self[k][self.__class__.ATTR]
+        if query:
+            return self._dfc__getitem__(k, private_key).query(query)
+        else:
+            return self._dfc__getitem__(k, private_key)
+    def _set_df(self, df):
+        self._dfc.__setitem__(
+            self.__class__.KEY,
+            df,
+            private_key=True,
+        )
+    def _df(self):
+        return self._dfc__getitem__(self.__class__.KEY, private_key=True)
+    def df(self):
+        return self._df().copy()
+    def __str__(self):
+        return str(self._df())
+    def __getitem__(self, k):
+        assert k in self._dfc
+        if k not in self._df().index.values:
+            self._set_df(self._df().append(
+                pd.DataFrame({self.__class__.ATTR:['']}, index=[k]),
+                verify_integrity=True,
+            ))
+        return self.df().loc[k]
+    def __setitem__(self, k, v):
+        assert isinstance(v, str)
+        assert k in self._dfc
+        if k not in self._df().index.values:
+            self._set_df(self._df().append(
+                pd.DataFrame({self.__class__.ATTR:[v]}, index=[k]),
+                verify_integrity=True,
+            ))
+        else:
+            self._df().loc[k][self.__class__.ATTR] = v
+    def update(self, d):
+        assert isinstance(d, dict)
+        for k,v in d.items():
+            self[k] = v
+
 class DataFrameCollection(object):
-    PRIVATE_KEYS = ['/filter']
-    def __init__(self,dict_of_data_frames={}):
+    PRIVATE_KEYS = []
+    def __init__(self, dict_of_data_frames={}, use_filter=True):
+        self.private_key = self.__class__.PRIVATE_KEYS.copy()
         self._df = {}
         self.loc = Loc(self._df)
+        if use_filter:
+            FilterDataFrame(self)
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames.items():
             self[k] = v
@@ -55,50 +116,29 @@ class DataFrameCollection(object):
             assert k is not None and v is not None
             return self._df[k].eval(v)
 
-    def filter(self, k, v=None):
-        def do(k,v):
-            assert isinstance(v, str)
-            assert k in self
-            self._df['/filter'].loc[k]['filter'] = v
-        if v is None:
-            assert isinstance(k, dict)
-            for k,v in k.items():
-                do(k,v)
-        else:
-            assert k is not None and v is not None
-            do(k,v)
-
     def get_filter(self):
-        return self._df['/filter'].drop(self.__class__.PRIVATE_KEYS)
+        return 'TODO'
+        # return self._df['/filter'].drop(self.__class__.PRIVATE_KEYS)
 
     def __getitem__(self, k, private_key=False):
         """Read Only"""
         if k[0] != '/':
             k = '/'+k
-        assert private_key or k not in self.__class__.PRIVATE_KEYS
+        assert private_key or k not in self.private_key
         if k not in self._df:
-            raise KeyError()
-        query = self._df['/filter'].loc[k]['filter']
-        if query:
-            return self._df[k].query(query)
-        else:
-            return self._df[k].copy()
+            raise KeyError(k)
+        return self._df[k].copy()
 
     def __setitem__(self, k, v, private_key=False):
         assert isinstance(k, str)
         if k[0] != '/':
             k = '/'+k
-        assert private_key or k not in self.__class__.PRIVATE_KEYS
+        assert private_key or k not in self.private_key
         assert isinstance(v, pd.DataFrame)
         self._df[k] = v
-        if k not in self._df.setdefault('/filter', pd.DataFrame({'filter':['']}, index=['/filter'])).index.values:
-            self._df['/filter'] = self._df['/filter'].append(
-                pd.DataFrame({'filter':['']},index=[k]),
-                verify_integrity=True,
-            )
 
     def __iter__(self):
-        return iter(filter(lambda k : k not in self.__class__.PRIVATE_KEYS, iter(self._df)))
+        return iter(filter(lambda k : k not in self.private_key, iter(self._df)))
 
     def __contains__(self, v):
         return v in self._df
@@ -108,10 +148,10 @@ class DataFrameCollection(object):
             yield v
 
     def items(self):
-        return filter(lambda i : i[0] not in self.__class__.PRIVATE_KEYS, self._df.items())
+        return filter(lambda i : i[0] not in self.private_key, self._df.items())
 
     def keys(self):
-        return filter(lambda k : k not in self.__class__.PRIVATE_KEYS, self._df.keys())
+        return filter(lambda k : k not in self.private_key, self._df.keys())
 
     def save(self, hdf_path):
         if os.path.splitext(hdf_path)[1] != '.h5':
