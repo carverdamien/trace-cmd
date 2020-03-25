@@ -37,12 +37,12 @@ class FilterDataFrame(MetaDataFrame):
         self._dfc__getitem__ = dfc.getitem
         dfc.getitem = self.filtered_getitem
         self._set_df(pd.DataFrame({self.__class__.ATTR:['']}, index=[self.__class__.KEY]))
-    def filtered_getitem(self, k, private_key=False):
+    def filtered_getitem(self, k, private_key=False, inplace=False):
         query = self[k][self.__class__.ATTR]
         if query:
-            return self._dfc__getitem__(k, private_key).query(query)
+            return self._dfc__getitem__(k, private_key, inplace).query(query)
         else:
-            return self._dfc__getitem__(k, private_key)
+            return self._dfc__getitem__(k, private_key, inplace)
     def _set_df(self, df):
         self._dfc.__setitem__(
             self.__class__.KEY,
