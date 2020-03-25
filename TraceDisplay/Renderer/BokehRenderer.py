@@ -63,7 +63,7 @@ class BokehRenderer(object):
             visible=True,
             height_policy='fit',
         )
-        self.row = row(self.figure, self.legend, sizing_mode='stretch_both')
+        self.root = row(self.figure, self.legend, sizing_mode='stretch_both')
         self._figure_range = {
             'x': {'start':x_range[0], 'end':x_range[1]},
             'y': {'start':y_range[0], 'end':y_range[1]},
@@ -149,7 +149,8 @@ class BokehRenderer(object):
         # print(f"{self._figure_range}")
         # print(self.colored_image._df['/filter'])
         self.updateImage()
-        push_notebook(handle=self.notebook_handle)
+        if self.notebook_handle:
+            push_notebook(handle=self.notebook_handle)
         for func in self.notify_update:
             func(self.figure.x_range.start,
                  self.figure.x_range.end,
@@ -160,8 +161,8 @@ class BokehRenderer(object):
 
     def show(self):
         output_notebook(hide_banner=True)
-        self.notebook_handle = show(self.row, notebook_handle=True)
+        self.notebook_handle = show(self.root, notebook_handle=True)
         interact_manual(self.update)
 
     def to_html(self):
-        return file_html(self.row, INLINE, '')
+        return file_html(self.root, INLINE, '')

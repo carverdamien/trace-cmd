@@ -7,83 +7,15 @@ def bokeh_render(render_path, data_path):
     from bokeh.document import Document
     from bokeh.embed import file_html
     from bokeh.resources import INLINE
-    from bokeh.plotting import figure
-    from bokeh.models import ColumnDataSource
-    import datashader as ds
-    import datashader.transfer_functions as tf
-    from bokeh.models.widgets import Div
-    from bokeh.layouts import row
+    from TraceDisplay import BokehRenderer
 
     image = Image()
     image.load(data_path)
-    # print(image)
-    line, color_map, label_map = image.line()
-    category = np.unique(line['category'])
-    color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
-    #print(line)
-    xmin = min(min(line['x0']), min(line['x1']))
-    xmax = max(max(line['x0']), max(line['x1']))
-    ymin = min(min(line['y0']), min(line['y1']))
-    ymax = max(max(line['y0']), max(line['y1']))
-
-    plot_width, plot_height = 800, 600
-    x_range = (xmin, xmax)
-    y_range = (ymin, ymax)
-    dw, dh = xmax - xmin, ymax - ymin
+    bkr = BokehRenderer()
+    bkr.render(image)
 
     doc = Document()
-    legend = Div(
-        visible=True,
-        height_policy='max',
-        text = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
-            [
-                '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
-                for c in category
-            ] + ['</ul>']
-        )
-    )
-    fig = figure(
-        x_range = x_range,
-        y_range = y_range,
-        sizing_mode='stretch_both',
-    )
-    source = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
-    fig.image_rgba(
-        source=source,
-        image='image',
-        x='x',
-        y='y',
-        dw='dw',
-        dh='dh',
-        dilate=False,
-    )
-    #
-    cvs = ds.Canvas(
-        plot_width=plot_width,
-        plot_height=plot_height,
-        x_range=x_range,
-        y_range=y_range,
-    )
-    agg = cvs.line(
-        line,
-        x=['x0','x1'],
-        y=['y0','y1'],
-        agg=ds.count_cat('category'),
-        axis=1,
-    )
-    img = tf.shade(
-        agg,
-        min_alpha=255,
-        color_key=color_key,
-    )
-    source.data.update(dict(
-        image=[img.data],
-        x=[xmin],
-        y=[ymin],
-        dw=[dw],
-        dh=[dh]),
-    )
-    doc.add_root(row(legend, fig, sizing_mode='stretch_both',),)
+    doc.add_root(bkr.root)
     doc.validate()
     with open(render_path, "w") as f:
         f.write(file_html(doc, INLINE, data_path))
