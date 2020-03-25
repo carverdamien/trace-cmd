@@ -137,8 +137,14 @@ class Image(DataFrameCollection):
     def shape(self, k):
         return self.__class__.SHAPE_CLASS[self.__getitem__('/shape', private_key=True).loc[k]['shape_class']]
 
+    def get_shape(self):
+        return self.__getitem__('/shape', private_key=True).copy()
+
     def category(self, k):
         return self.__getitem__('/category', private_key=True).loc[k]
+
+    def get_category(self):
+        return self.__getitem__('/category', private_key=True).copy()
 
     def load(self, path):
         super(Image, self).load(path)
