@@ -34,10 +34,10 @@ class FilterDataFrame(MetaDataFrame):
     KEY  = '/filter'
     def __init__(self, dfc):
         super(FilterDataFrame, self).__init__(dfc)
-        self._dfc__getitem__ = dfc.__getitem__
-        dfc.__getitem__ = self.__filtered__getitem__
+        self._dfc__getitem__ = dfc.getitem
+        dfc.getitem = self.filtered_getitem
         self._set_df(pd.DataFrame({self.__class__.ATTR:['']}, index=[self.__class__.KEY]))
-    def __filtered__getitem__(self, k, private_key=False):
+    def filtered_getitem(self, k, private_key=False):
         query = self[k][self.__class__.ATTR]
         if query:
             return self._dfc__getitem__(k, private_key).query(query)
@@ -50,7 +50,7 @@ class FilterDataFrame(MetaDataFrame):
             private_key=True,
         )
     def _df(self):
-        return self._dfc__getitem__(self.__class__.KEY, private_key=True)
+        return self._dfc._df[self.__class__.KEY]
     def df(self):
         return self._df().copy()
     def __str__(self):
@@ -72,7 +72,7 @@ class FilterDataFrame(MetaDataFrame):
                 verify_integrity=True,
             ))
         else:
-            self._df().loc[k][self.__class__.ATTR] = v
+            self._df().loc[k, [self.__class__.ATTR]] = v
     def update(self, d):
         assert isinstance(d, dict)
         for k,v in d.items():
@@ -121,6 +121,9 @@ class DataFrameCollection(object):
         # return self._df['/filter'].drop(self.__class__.PRIVATE_KEYS)
 
     def __getitem__(self, k, private_key=False):
+        return self.getitem(k, private_key)
+
+    def getitem(self, k, private_key=False):
         """Read Only"""
         if k[0] != '/':
             k = '/'+k
@@ -130,6 +133,9 @@ class DataFrameCollection(object):
         return self._df[k].copy()
 
     def __setitem__(self, k, v, private_key=False):
+        self.setitem(k, v, private_key)
+
+    def setitem(self, k, v, private_key=False):
         assert isinstance(k, str)
         if k[0] != '/':
             k = '/'+k
@@ -140,8 +146,10 @@ class DataFrameCollection(object):
     def __iter__(self):
         return iter(filter(lambda k : k not in self.private_key, iter(self._df)))
 
-    def __contains__(self, v):
-        return v in self._df
+    def __contains__(self, k):
+        if k[0] != '/':
+            k = '/'+k
+        return k in self._df
 
     def values(self):
         for k,v in self.items():
