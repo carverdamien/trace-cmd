@@ -50,7 +50,11 @@ class FilterDataFrame(MetaDataFrame):
             private_key=True,
         )
     def _df(self):
-        return self._dfc._df[self.__class__.KEY]
+        return self._dfc__getitem__(
+            self.__class__.KEY,
+            private_key=True,
+            inplace=True,
+        )
     def df(self):
         return self._df().copy()
     def __str__(self):
@@ -79,7 +83,7 @@ class FilterDataFrame(MetaDataFrame):
             self[k] = v
 
 class DataFrameCollection(object):
-    PRIVATE_KEYS = []
+    PRIVATE_KEYS = [] # TODO: rm
     def __init__(self, dict_of_data_frames={}, use_filter=True):
         self.private_key = self.__class__.PRIVATE_KEYS.copy()
         self._df = {}
@@ -89,6 +93,11 @@ class DataFrameCollection(object):
         assert isinstance(dict_of_data_frames, dict)
         for k,v in dict_of_data_frames.items():
             self[k] = v
+
+    def key(self, k):
+        if k[0] != '/':
+            k = '/'+k
+        return k
 
     def drop(self):
         self._df = {}
@@ -116,29 +125,30 @@ class DataFrameCollection(object):
             assert k is not None and v is not None
             return self._df[k].eval(v)
 
-    def get_filter(self):
+    def get_filter(self): # TODO: rm
         return 'TODO'
         # return self._df['/filter'].drop(self.__class__.PRIVATE_KEYS)
 
-    def __getitem__(self, k, private_key=False):
-        return self.getitem(k, private_key)
+    def __getitem__(self, k, private_key=False, inplace=False):
+        return self.getitem(k, private_key, inplace)
 
-    def getitem(self, k, private_key=False):
+    def getitem(self, k, private_key=False, inplace=False):
         """Read Only"""
-        if k[0] != '/':
-            k = '/'+k
+        k = self.key(k)
         assert private_key or k not in self.private_key
         if k not in self._df:
             raise KeyError(k)
-        return self._df[k].copy()
+        if inplace:
+            return self._df[k]
+        else:
+            return self._df[k].copy()
 
     def __setitem__(self, k, v, private_key=False):
         self.setitem(k, v, private_key)
 
     def setitem(self, k, v, private_key=False):
         assert isinstance(k, str)
-        if k[0] != '/':
-            k = '/'+k
+        k = self.key(k)
         assert private_key or k not in self.private_key
         assert isinstance(v, pd.DataFrame)
         self._df[k] = v
@@ -147,8 +157,7 @@ class DataFrameCollection(object):
         return iter(filter(lambda k : k not in self.private_key, iter(self._df)))
 
     def __contains__(self, k):
-        if k[0] != '/':
-            k = '/'+k
+        k = self.key(k)
         return k in self._df
 
     def values(self):
