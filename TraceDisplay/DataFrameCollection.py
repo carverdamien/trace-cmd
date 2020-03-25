@@ -57,8 +57,8 @@ class FilterDataFrame(MetaDataFrame):
         )
     def df(self):
         return self._df().copy()
-    def __str__(self):
-        return str(self._df())
+    def _repr_html_(self):
+        return self._df().drop(self._dfc.private_key)._repr_html_()
     def __getitem__(self, k):
         assert k in self._dfc
         if k not in self._df().index.values:
@@ -120,10 +120,6 @@ class DataFrameCollection(object):
         else:
             assert k is not None and v is not None
             return self._df[k].eval(v)
-
-    def get_filter(self): # TODO: rm
-        return 'TODO'
-        # return self._df['/filter'].drop(self.__class__.PRIVATE_KEYS)
 
     def __getitem__(self, k, private_key=False, inplace=False):
         return self.getitem(k, private_key, inplace)
