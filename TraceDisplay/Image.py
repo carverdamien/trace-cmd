@@ -159,24 +159,19 @@ class CategoryDataFrame(MetaDataFrame):
         })
 
 class Image(DataFrameCollection):
-    PRIVATE_KEYS = DataFrameCollection.PRIVATE_KEYS + ['/shape', '/category']
+    PRIVATE_KEYS = DataFrameCollection.PRIVATE_KEYS + ['/shape']
     SHAPE_CLASS = {
         'LineShape' : LineShape,
     }
     def __init__(self, *args, **kwargs):
         super(Image, self).__init__(*args, **kwargs)
+        CategoryDataFrame(self)
 
     def shape(self, k):
         return self.__class__.SHAPE_CLASS[self.__getitem__('/shape', private_key=True).loc[k]['shape_class']]
 
     def get_shape(self):
         return self.__getitem__('/shape', private_key=True).copy()
-
-    def category(self, k):
-        return self.__getitem__('/category', private_key=True).loc[k]
-
-    def get_category(self):
-        return self.__getitem__('/category', private_key=True).copy()
 
     def load(self, path):
         super(Image, self).load(path)
@@ -186,7 +181,7 @@ class Image(DataFrameCollection):
             for kk in shape.shape_fields:
                 assert kk in v.columns
             for category in np.unique(v['category']):
-                assert category in self.__getitem__('/category', private_key=True).index.values
+                assert category in self.category
 
     def build(self, trace, shape=None, category=None):
         if shape is None:
@@ -203,11 +198,11 @@ class Image(DataFrameCollection):
             self.__setitem__('/category', DefaultCategory()(self), private_key=True)
         else:
             raise Exception('TODO')
-        category = self.__getitem__('/category', private_key=True)
         for i, c in category.iterrows():
-            query = json.loads(c['query'])
-            for k in query:
-                self.loc[k, self.eval(k, query[k]), ['category']] = i
+            label = c['label']
+            color = c['color']
+            query = c['query']
+            self.category.append(label, color, query)
 
     def line(self):
         def df(k):
@@ -216,6 +211,6 @@ class Image(DataFrameCollection):
             return self[k].drop(columns=todrop)
         line = pd.concat([df(k) for k in filter(lambda k: self.shape(k) is LineShape, self)])
         line['category'] = line['category'].astype('category')
-        color_map = {category : self.category(category)['color'] for category in np.unique(line['category'])}
-        label_map = {category : self.category(category)['label'] for category in np.unique(line['category'])}
+        color_map = {category : self.category[category]['color'] for category in np.unique(line['category'])}
+        label_map = {category : self.category[category]['label'] for category in np.unique(line['category'])}
         return line, color_map, label_map
