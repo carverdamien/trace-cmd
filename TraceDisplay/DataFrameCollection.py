@@ -47,7 +47,7 @@ class MetaDataFrame(object):
         else:
             return self.dfc.getitem(self.__class__.KEY, private_key=True, inplace=True)
     def _repr_html_(self):
-        return self.df.drop(self.dfc.private_key)._repr_html_()
+        return self.df._repr_html_()
     def __contains__(self, k):
         return k in self.df.index
     def __getitem__(self, k):
@@ -107,6 +107,16 @@ class FilterDataFrame(MetaDataFrame):
         if k not in self:
             super(FilterDataFrame, self).__setitem__(k, default)
         return super(FilterDataFrame, self).__getitem__(k)
+    def _repr_html_(self):
+        to_drop = [
+            self.dfc.key(k)
+            for k in self.df.index
+            if self.dfc.key(k) in self.dfc.private_key
+        ]
+        if len(to_drop):
+            return self.df.drop(to_drop)._repr_html_()
+        else:
+            return self.df._repr_html_()
 
 class DataFrameCollection(object):
     PRIVATE_KEYS = [] # TODO: rm
