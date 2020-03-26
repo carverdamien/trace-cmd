@@ -37,6 +37,7 @@ class MetaDataFrame(object):
         if k not in ['df']:
             super(MetaDataFrame, self).__setattr__(k, v)
         else:
+            assert isinstance(v, pd.DataFrame)
             self._dfc.setitem(self.__class__.KEY, v, private_key=True)
     def __getattr__(self, k):
         if k not in ['df']:
@@ -45,6 +46,33 @@ class MetaDataFrame(object):
             return self._dfc.getitem(self.__class__.KEY, private_key=True, inplace=True)
     def _repr_html_(self):
         return self.df.drop(self._dfc.private_key)._repr_html_()
+    def __contains__(self, k):
+        return k in self.df.index
+    def __getitem__(self, k):
+        return self.df.loc[k]
+    def __setitem__(self, k, v):
+        if k not in self:
+            self.df = self.df.append(
+                pd.DataFrame(v, index=[k]),
+                sort=True,
+                verify_integrity=True,
+            )
+        else:
+            self.df.loc[k] = v
+    def get(self, k, default):
+        if k not in self:
+            return default
+        return self[k]
+    def setdefault(self, k, default):
+        if k not in self:
+            self[k] = default
+        return self[k]
+    def update(self, d):
+        for k,v in d.items():
+            self[k] = v
+    def extend(self, a):
+        for v in a:
+            self[len(self.df)] = v
 
 class FilterDataFrame(MetaDataFrame):
     ATTR = 'filter'
@@ -62,26 +90,18 @@ class FilterDataFrame(MetaDataFrame):
             return self._dfc__getitem__(k, private_key, inplace)
     def __getitem__(self, k):
         assert k in self._dfc
-        if k not in self.df.index.values:
-            self.df = self.df.append(
-                pd.DataFrame({self.__class__.ATTR:['']}, index=[k]),
-                verify_integrity=True,
-            )
-        return self.df.loc[k]
+        return self.setdefault(k, {self.__class__.ATTR:['']})
     def __setitem__(self, k, v):
         assert isinstance(v, str)
         assert k in self._dfc
-        if k not in self.df.index.values:
-            self.df = self.df.append(
-                pd.DataFrame({self.__class__.ATTR:[v]}, index=[k]),
-                verify_integrity=True,
-            )
+        if k not in self:
+            self.setdefault(k, {self.__class__.ATTR:[v]})
         else:
-            self.df.loc[k, [self.__class__.ATTR]] = v
-    def update(self, d):
-        assert isinstance(d, dict)
-        for k,v in d.items():
-            self[k] = v
+            super(FilterDataFrame, self).__setitem__(k, v)
+    def setdefault(self, k, default):
+        if k not in self:
+            super(FilterDataFrame, self).__setitem__(k, default)
+        return super(FilterDataFrame, self).__getitem__(k)
 
 class DataFrameCollection(object):
     PRIVATE_KEYS = [] # TODO: rm
