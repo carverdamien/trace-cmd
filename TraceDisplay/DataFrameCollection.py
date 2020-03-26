@@ -27,7 +27,7 @@ class MetaDataFrame(object):
         assert self.__class__.KEY not in dfc.private_key
         setattr(dfc, self.__class__.ATTR, self)
         dfc.private_key.append(self.__class__.KEY)
-        self._dfc = dfc
+        self.dfc = dfc
     def __hasattr__(self, k):
         if k not in ['df']:
             return super(MetaDataFrame, self).__hasattr__(k)
@@ -38,14 +38,14 @@ class MetaDataFrame(object):
             super(MetaDataFrame, self).__setattr__(k, v)
         else:
             assert isinstance(v, pd.DataFrame)
-            self._dfc.setitem(self.__class__.KEY, v, private_key=True)
+            self.dfc.setitem(self.__class__.KEY, v, private_key=True)
     def __getattr__(self, k):
         if k not in ['df']:
             return super(MetaDataFrame, self).__getattr__(k)
         else:
-            return self._dfc.getitem(self.__class__.KEY, private_key=True, inplace=True)
+            return self.dfc.getitem(self.__class__.KEY, private_key=True, inplace=True)
     def _repr_html_(self):
-        return self.df.drop(self._dfc.private_key)._repr_html_()
+        return self.df.drop(self.dfc.private_key)._repr_html_()
     def __contains__(self, k):
         return k in self.df.index
     def __getitem__(self, k):
@@ -70,30 +70,32 @@ class MetaDataFrame(object):
     def update(self, d):
         for k,v in d.items():
             self[k] = v
+    def append(self, v):
+        self[len(self.df)] = v
     def extend(self, a):
         for v in a:
-            self[len(self.df)] = v
+            self.append(v)
 
 class FilterDataFrame(MetaDataFrame):
     ATTR = 'filter'
     KEY  = '/filter'
     def __init__(self, dfc):
         super(FilterDataFrame, self).__init__(dfc)
-        self._dfc__getitem__ = dfc.override_getitem
+        self.dfc_override_getitem = dfc.override_getitem
         dfc.override_getitem = self.filtered_getitem
         self.df = pd.DataFrame({self.__class__.ATTR:['']}, index=[self.__class__.KEY])
     def filtered_getitem(self, k, private_key=False, inplace=False):
         query = self[k][self.__class__.ATTR]
         if query:
-            return self._dfc__getitem__(k, private_key, inplace).query(query)
+            return self.dfc_override_getitem(k, private_key, inplace).query(query)
         else:
-            return self._dfc__getitem__(k, private_key, inplace)
+            return self.dfc_override_getitem(k, private_key, inplace)
     def __getitem__(self, k):
-        assert k in self._dfc
+        assert k in self.dfc
         return self.setdefault(k, {self.__class__.ATTR:['']})
     def __setitem__(self, k, v):
         assert isinstance(v, str)
-        assert k in self._dfc
+        assert k in self.dfc
         if k not in self:
             self.setdefault(k, {self.__class__.ATTR:[v]})
         else:
