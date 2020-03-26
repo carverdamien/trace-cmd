@@ -43,6 +43,8 @@ class MetaDataFrame(object):
             return super(MetaDataFrame, self).__getattr__(k)
         else:
             return self._dfc.getitem(self.__class__.KEY, private_key=True, inplace=True)
+    def _repr_html_(self):
+        return self.df.drop(self._dfc.private_key)._repr_html_()
 
 class FilterDataFrame(MetaDataFrame):
     ATTR = 'filter'
@@ -58,8 +60,6 @@ class FilterDataFrame(MetaDataFrame):
             return self._dfc__getitem__(k, private_key, inplace).query(query)
         else:
             return self._dfc__getitem__(k, private_key, inplace)
-    def _repr_html_(self):
-        return self.df.drop(self._dfc.private_key)._repr_html_()
     def __getitem__(self, k):
         assert k in self._dfc
         if k not in self.df.index.values:
