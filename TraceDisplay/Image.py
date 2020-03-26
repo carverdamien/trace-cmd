@@ -1,4 +1,4 @@
-from .DataFrameCollection import DataFrameCollection, FileExtensionError
+from .DataFrameCollection import DataFrameCollection, MetaDataFrame, FileExtensionError
 import os
 import logging
 import pandas as pd
@@ -125,6 +125,38 @@ class DefaultCategory(object):
             data.append([color, label, query])
             category+=1
         return pd.DataFrame(data, index=index, columns=columns)
+
+class CategoryDataFrame(MetaDataFrame):
+    """docstring for CategoryDataFrame"""
+    ATTR = 'category'
+    KEY  = '/category'
+    def __init__(self, dfc):
+        super(CategoryDataFrame, self).__init__(dfc)
+    def __setitem__(self, k, v):
+        assert isinstance(k, int)
+        assert k == len(self.df)
+        super(CategoryDataFrame, self).__setitem__(k, v)
+    def append(self, label, color, query):
+        if isinstance(query, str):
+            query_str = query
+            query_dict = json.loads(query)
+        if isinstance(query, dict):
+            query_dict = query
+            query_str = json.dumps(query)
+        assert isinstance(label, str)
+        assert isinstance(color, str)
+        assert isinstance(query_dict, dict)
+        assert isinstance(query_str, str)
+        for k in query_dict:
+            assert k in self.dfc
+        i = len(self.df)
+        for k in query_dict:
+            self.dfc.loc[k, self.dfc.eval(k, query_dict[k]), ['category']] = i
+        super(CategoryDataFrame, self).append({
+            'label' : label,
+            'color' : color,
+            'query' : query_str,
+        })
 
 class Image(DataFrameCollection):
     PRIVATE_KEYS = DataFrameCollection.PRIVATE_KEYS + ['/shape', '/category']
