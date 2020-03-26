@@ -28,55 +28,56 @@ class MetaDataFrame(object):
         setattr(dfc, self.__class__.ATTR, self)
         dfc.private_key.append(self.__class__.KEY)
         self._dfc = dfc
+    def __hasattr__(self, k):
+        if k not in ['df']:
+            return super(MetaDataFrame, self).__hasattr__(k)
+        else:
+            return True
+    def __setattr__(self, k, v):
+        if k not in ['df']:
+            super(MetaDataFrame, self).__setattr__(k, v)
+        else:
+            self._dfc.setitem(self.__class__.KEY, v, private_key=True)
+    def __getattr__(self, k):
+        if k not in ['df']:
+            return super(MetaDataFrame, self).__getattr__(k)
+        else:
+            return self._dfc.getitem(self.__class__.KEY, private_key=True, inplace=True)
 
 class FilterDataFrame(MetaDataFrame):
     ATTR = 'filter'
     KEY  = '/filter'
     def __init__(self, dfc):
         super(FilterDataFrame, self).__init__(dfc)
-        self._dfc__getitem__ = dfc.getitem
-        dfc.getitem = self.filtered_getitem
-        self._set_df(pd.DataFrame({self.__class__.ATTR:['']}, index=[self.__class__.KEY]))
+        self._dfc__getitem__ = dfc.override_getitem
+        dfc.override_getitem = self.filtered_getitem
+        self.df = pd.DataFrame({self.__class__.ATTR:['']}, index=[self.__class__.KEY])
     def filtered_getitem(self, k, private_key=False, inplace=False):
         query = self[k][self.__class__.ATTR]
         if query:
             return self._dfc__getitem__(k, private_key, inplace).query(query)
         else:
             return self._dfc__getitem__(k, private_key, inplace)
-    def _set_df(self, df):
-        self._dfc.__setitem__(
-            self.__class__.KEY,
-            df,
-            private_key=True,
-        )
-    def _df(self):
-        return self._dfc__getitem__(
-            self.__class__.KEY,
-            private_key=True,
-            inplace=True,
-        )
-    def df(self):
-        return self._df().copy()
     def _repr_html_(self):
-        return self._df().drop(self._dfc.private_key)._repr_html_()
+        return self.df.drop(self._dfc.private_key)._repr_html_()
     def __getitem__(self, k):
         assert k in self._dfc
-        if k not in self._df().index.values:
-            self._set_df(self._df().append(
+        if k not in self.df.index.values:
+            self.df = self.df.append(
                 pd.DataFrame({self.__class__.ATTR:['']}, index=[k]),
                 verify_integrity=True,
-            ))
-        return self.df().loc[k]
+            )
+        return self.df.loc[k]
     def __setitem__(self, k, v):
         assert isinstance(v, str)
         assert k in self._dfc
-        if k not in self._df().index.values:
-            self._set_df(self._df().append(
+        if k not in self.df.index.values:
+            self.df = self.df.append(
                 pd.DataFrame({self.__class__.ATTR:[v]}, index=[k]),
                 verify_integrity=True,
-            ))
+            )
         else:
-            self._df().loc[k, [self.__class__.ATTR]] = v
+            self.df.loc[k, [self.__class__.ATTR]] = v
     def update(self, d):
         assert isinstance(d, dict)
         for k,v in d.items():
@@ -85,6 +86,8 @@ class FilterDataFrame(MetaDataFrame):
 class DataFrameCollection(object):
     PRIVATE_KEYS = [] # TODO: rm
     def __init__(self, dict_of_data_frames={}, use_filter=True):
+        self.override_getitem = self.getitem
+        self.override_setitem = self.setitem
         self.private_key = self.__class__.PRIVATE_KEYS.copy()
         self._df = {}
         self.loc = Loc(self._df)
@@ -122,7 +125,7 @@ class DataFrameCollection(object):
             return self._df[k].eval(v)
 
     def __getitem__(self, k, private_key=False, inplace=False):
-        return self.getitem(k, private_key, inplace)
+        return self.override_getitem(k, private_key, inplace)
 
     def getitem(self, k, private_key=False, inplace=False):
         """Read Only"""
@@ -136,7 +139,7 @@ class DataFrameCollection(object):
             return self._df[k].copy()
 
     def __setitem__(self, k, v, private_key=False):
-        self.setitem(k, v, private_key)
+        self.override_setitem(k, v, private_key)
 
     def setitem(self, k, v, private_key=False):
         assert isinstance(k, str)
