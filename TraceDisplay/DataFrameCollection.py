@@ -21,13 +21,15 @@ class Loc(object):
         return self.df[k].loc[i,c]
 
 class MetaDataFrame(object):
-    def __init__(self, dfc):
+    def __init__(self, dfc, df):
         assert isinstance(dfc, DataFrameCollection)
         assert not hasattr(dfc, self.__class__.ATTR)
         assert self.__class__.KEY not in dfc.private_key
         setattr(dfc, self.__class__.ATTR, self)
         dfc.private_key.append(self.__class__.KEY)
         self.dfc = dfc
+        self.df = df
+        self.df_at_init = df
     def __hasattr__(self, k):
         if k not in ['df']:
             return super(MetaDataFrame, self).__hasattr__(k)
@@ -75,15 +77,16 @@ class MetaDataFrame(object):
     def extend(self, a):
         for v in a:
             self.append(v)
+    def clear(self):
+        self.df = pd.DataFrame(self.df_at_init)
 
 class FilterDataFrame(MetaDataFrame):
     ATTR = 'filter'
     KEY  = '/filter'
-    def __init__(self, dfc):
-        super(FilterDataFrame, self).__init__(dfc)
+    def __init__(self, dfc, df=pd.DataFrame()):
+        super(FilterDataFrame, self).__init__(dfc, df)
         self.dfc_override_getitem = dfc.override_getitem
         dfc.override_getitem = self.filtered_getitem
-        self.df = pd.DataFrame({self.__class__.ATTR:['']}, index=[self.__class__.KEY])
     def filtered_getitem(self, k, private_key=False, inplace=False):
         query = self[k][self.__class__.ATTR]
         if query:

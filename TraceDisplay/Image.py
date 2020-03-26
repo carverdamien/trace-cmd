@@ -130,8 +130,8 @@ class CategoryDataFrame(MetaDataFrame):
     """docstring for CategoryDataFrame"""
     ATTR = 'category'
     KEY  = '/category'
-    def __init__(self, dfc):
-        super(CategoryDataFrame, self).__init__(dfc)
+    def __init__(self, dfc, df=pd.DataFrame()):
+        super(CategoryDataFrame, self).__init__(dfc, df)
     def __setitem__(self, k, v):
         assert isinstance(k, int)
         assert k == len(self.df)
@@ -195,7 +195,7 @@ class Image(DataFrameCollection):
             logging.info('Building %s' % k)
             self[k] = pd.DataFrame(v(trace))
         if category is None:
-            self.__setitem__('/category', DefaultCategory()(self), private_key=True)
+            category = DefaultCategory()(self)
         else:
             raise Exception('TODO')
         for i, c in category.iterrows():
