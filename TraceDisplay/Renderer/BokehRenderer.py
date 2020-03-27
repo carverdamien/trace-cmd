@@ -14,6 +14,7 @@ from ..Image import Image
 
 BOKEH_RENDERER = {}
 FIGURE_RANGE_JSCODE = """
+if (typeof Jupyter !== 'undefined') {
 var brid = "%r";
 var ax   = "%r";
 var notebook = Jupyter.notebook;
@@ -21,6 +22,7 @@ var start = cb_obj.start;
 var end = cb_obj.end;
 
 notebook.kernel.execute("BOKEH_RENDERER["+brid+"].figure_range(ax="+ax+",start="+start+",end="+end+")");
+}
 """
 
 def default_rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key):
@@ -46,7 +48,7 @@ def default_rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, col
     return image
 
 class BokehRenderer(object):
-    def __init__(self, *args, jupyter=True, **kwargs):
+    def __init__(self, *args, **kwargs):
         x_range = (0,1)
         y_range = (0,1)
         # TODO: lock BOKEH_RENDERER
@@ -69,9 +71,8 @@ class BokehRenderer(object):
             'x': {'start':x_range[0], 'end':x_range[1]},
             'y': {'start':y_range[0], 'end':y_range[1]},
         }
-        if jupyter:
-            self.figure.x_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'x'))
-            self.figure.y_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'y'))
+        self.figure.x_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'x'))
+        self.figure.y_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'y'))
         self.notebook_handle = None
         self.colored_image = None
         self.image = None

@@ -11,7 +11,7 @@ def bokeh_render(render_path, data_path):
 
     image = Image()
     image.load(data_path)
-    bkr = BokehRenderer(jupyter=False)
+    bkr = BokehRenderer()
     bkr.render(image)
 
     doc = Document()
