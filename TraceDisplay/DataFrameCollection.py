@@ -48,6 +48,8 @@ class MetaDataFrame(object):
             return self.dfc.getitem(self.__class__.KEY, private_key=True, inplace=True)
     def _repr_html_(self):
         return self.df._repr_html_()
+    def __iter__(self):
+        return iter(self.df.index)
     def __contains__(self, k):
         return k in self.df.index
     def __getitem__(self, k):

@@ -144,11 +144,17 @@ class CategoryDataFrame(MetaDataFrame):
     KEY  = '/category'
     def __init__(self, dfc, df=pd.DataFrame()):
         super(CategoryDataFrame, self).__init__(dfc, df)
-    def __setitem__(self, k, v):
-        assert isinstance(k, int)
-        assert k == len(self.df)
-        super(CategoryDataFrame, self).__setitem__(k, v)
-    def append(self, label, color, query):
+    def apply(self):
+        for i in self:
+            query_dict = json.loads(self[i]['query'])
+            for k in query_dict:
+                self.dfc.loc[k, self.dfc.eval(k, query_dict[k]), ['category']] = i
+    def __setitem__(self, i, v):
+        assert isinstance(i, int)
+        assert i <= len(self.df)
+        label = v['label']
+        color = v['color']
+        query = v['query']
         if isinstance(query, str):
             query_str = query
             query_dict = json.loads(query)
@@ -161,13 +167,20 @@ class CategoryDataFrame(MetaDataFrame):
         assert isinstance(query_str, str)
         for k in query_dict:
             assert k in self.dfc
-        i = len(self.df)
-        for k in query_dict:
-            self.dfc.loc[k, self.dfc.eval(k, query_dict[k]), ['category']] = i
+            assert isinstance(query_dict[k], str)
+        super(CategoryDataFrame, self).__setitem__(
+            i,
+            {
+                'label' : label,
+                'color' : color,
+                'query' : query_str,
+            },
+        )
+    def append(self, label, color, query):
         super(CategoryDataFrame, self).append({
             'label' : label,
             'color' : color,
-            'query' : query_str,
+            'query' : query,
         })
 
 class Image(DataFrameCollection):
@@ -212,7 +225,9 @@ class Image(DataFrameCollection):
             shape_fields = SHAPE_CLASS[self.shape[k]].shape_fields
             todrop = list(filter(lambda k : k not in shape_fields, self[k].columns))
             return self[k].drop(columns=todrop)
-        line = pd.concat([df(k) for k in filter(lambda k: self.shape[k] == 'LineShape', self)])
+        self.category.apply()
+        iterator = filter(lambda k: k in self.shape and self.shape[k] == 'LineShape', self)
+        line = pd.concat([df(k) for k in iterator], sort=True)
         line['category'] = line['category'].astype('category')
         category = np.unique(line['category'])
         color_map = {c : self.category[c]['color'] for c in category}
