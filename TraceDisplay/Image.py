@@ -42,6 +42,10 @@ class LineShape(Shape):
             'y1'       : [],
         }
 
+SHAPE_CLASS = {
+    'LineShape' : LineShape,
+}
+
 class DefaultLineShape(LineShape):
     def __init__(self, key, *args, **kwargs):
         super(DefaultLineShape, self).__init__(*args, **kwargs)
@@ -78,14 +82,6 @@ class ShapeCollection(object):
         return iter(self.shape)
     def items(self):
         return self.shape.items()
-    def to_DataFrame(self):
-        data = []
-        index = []
-        columns = ['shape_class']
-        for k,v in self.items():
-            index.append(k)
-            data.append([v.shape_class])
-        return pd.DataFrame(data, index=index, columns=columns)
 
 def DefaultShapeCollection(trace):
     return ShapeCollection({
@@ -126,6 +122,22 @@ class DefaultCategory(object):
             category+=1
         return pd.DataFrame(data, index=index, columns=columns)
 
+class ShapeDataFrame(MetaDataFrame):
+    """docstring for ShapeDataFrame"""
+    ATTR = 'shape'
+    KEY  = '/shape'
+    def __init__(self, dfc, df=pd.DataFrame()):
+        super(ShapeDataFrame, self).__init__(dfc, df)
+    def __setitem__(self, k, v):
+        assert k in self.dfc
+        assert v in SHAPE_CLASS
+        shape_class = SHAPE_CLASS[v]
+        for field in shape_class.shape_fields:
+            assert field in self.dfc[k].columns
+        super(ShapeDataFrame, self).__setitem__(k,{'shape_class':v})
+    def __getitem__(self, k):
+        return  super(ShapeDataFrame, self).__getitem__(k)['shape_class']
+
 class CategoryDataFrame(MetaDataFrame):
     """docstring for CategoryDataFrame"""
     ATTR = 'category'
@@ -159,26 +171,17 @@ class CategoryDataFrame(MetaDataFrame):
         })
 
 class Image(DataFrameCollection):
-    PRIVATE_KEYS = DataFrameCollection.PRIVATE_KEYS + ['/shape']
-    SHAPE_CLASS = {
-        'LineShape' : LineShape,
-    }
     def __init__(self, *args, **kwargs):
         super(Image, self).__init__(*args, **kwargs)
         CategoryDataFrame(self)
-
-    def shape(self, k):
-        return self.__class__.SHAPE_CLASS[self.__getitem__('/shape', private_key=True).loc[k]['shape_class']]
-
-    def get_shape(self):
-        return self.__getitem__('/shape', private_key=True).copy()
+        ShapeDataFrame(self)
 
     def load(self, path):
         super(Image, self).load(path)
         # Check format
         for k,v in self.items():
-            shape = self.shape(k)
-            for kk in shape.shape_fields:
+            shape_class = SHAPE_CLASS[self.shape[k]]
+            for kk in shape_class.shape_fields:
                 assert kk in v.columns
             for category in np.unique(v['category']):
                 assert category in self.category
@@ -189,11 +192,11 @@ class Image(DataFrameCollection):
         else:
             raise Exception('TODO')
         assert isinstance(shape, ShapeCollection)
-        self.__setitem__('/shape', shape.to_DataFrame(), private_key=True)
         # TODO: in parallel
         for k, v in shape.items():
             logging.info('Building %s' % k)
             self[k] = pd.DataFrame(v(trace))
+            self.shape[k] = v.shape_class
         if category is None:
             category = DefaultCategory()(self)
         else:
@@ -206,10 +209,10 @@ class Image(DataFrameCollection):
 
     def line(self):
         def df(k):
-            shape_fields = self.shape(k).shape_fields
+            shape_fields = SHAPE_CLASS[self.shape[k]].shape_fields
             todrop = list(filter(lambda k : k not in shape_fields, self[k].columns))
             return self[k].drop(columns=todrop)
-        line = pd.concat([df(k) for k in filter(lambda k: self.shape(k) is LineShape, self)])
+        line = pd.concat([df(k) for k in filter(lambda k: self.shape[k] == 'LineShape', self)])
         line['category'] = line['category'].astype('category')
         color_map = {category : self.category[category]['color'] for category in np.unique(line['category'])}
         label_map = {category : self.category[category]['label'] for category in np.unique(line['category'])}
