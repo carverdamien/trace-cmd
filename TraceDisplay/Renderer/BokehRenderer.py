@@ -46,7 +46,7 @@ def default_rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, col
     return image
 
 class BokehRenderer(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, jupyter=True, **kwargs):
         x_range = (0,1)
         y_range = (0,1)
         # TODO: lock BOKEH_RENDERER
@@ -68,8 +68,9 @@ class BokehRenderer(object):
             'x': {'start':x_range[0], 'end':x_range[1]},
             'y': {'start':y_range[0], 'end':y_range[1]},
         }
-        self.figure.x_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'x'))
-        self.figure.y_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'y'))
+        if jupyter:
+            self.figure.x_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'x'))
+            self.figure.y_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'y'))
         self.notebook_handle = None
         self.colored_image = None
         self.image = None
@@ -87,10 +88,11 @@ class BokehRenderer(object):
 
     def reset_ranges(self):
         ci = self.colored_image
-        xmin = min(min(np.min(ci[k]['x0']), np.min(ci[k]['x1'])) for k in ci)
-        xmax = max(max(np.max(ci[k]['x0']), np.max(ci[k]['x1'])) for k in ci)
-        ymin = min(min(np.min(ci[k]['y0']), np.min(ci[k]['y1'])) for k in ci)
-        ymax = max(max(np.max(ci[k]['y0']), np.max(ci[k]['y1'])) for k in ci)
+        line, color_map, label_map = self.colored_image.line()
+        xmin = min(min(line['x0']), min(line['x1']))
+        xmax = max(max(line['x0']), max(line['x1']))
+        ymin = min(min(line['y0']), min(line['y1']))
+        ymax = max(max(line['y0']), max(line['y1']))
         self._figure_range.update({
             'x': {'start':xmin, 'end':xmax},
             'y': {'start':ymin, 'end':ymax},
@@ -112,16 +114,15 @@ class BokehRenderer(object):
         if self.colored_image is None:
             return
         line, color_map, label_map = self.colored_image.line()
-        category = np.unique(line['category'])
         legend = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
             [
                 '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
-                for c in category
+                for c in color_map
             ] + ['</ul>']
         )
         legend = '<div style="overflow:scroll; max-height: 45em;">'+ legend +'</div>'
         self.legend.text = legend
-        color_key = [color_map[k] for k in sorted(color_map.keys()) if k in category]
+        color_key = [color_map[k] for k in sorted(color_map.keys())]
         image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
         self.image = image
         self.source.data.update(dict(image=[image.data],

@@ -214,6 +214,7 @@ class Image(DataFrameCollection):
             return self[k].drop(columns=todrop)
         line = pd.concat([df(k) for k in filter(lambda k: self.shape[k] == 'LineShape', self)])
         line['category'] = line['category'].astype('category')
-        color_map = {category : self.category[category]['color'] for category in np.unique(line['category'])}
-        label_map = {category : self.category[category]['label'] for category in np.unique(line['category'])}
+        category = np.unique(line['category'])
+        color_map = {c : self.category[c]['color'] for c in category}
+        label_map = {c : self.category[c]['label'] for c in category}
         return line, color_map, label_map
