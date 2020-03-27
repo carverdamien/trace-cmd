@@ -57,6 +57,7 @@ class BokehRenderer(object):
         self.figure = figure(
             x_range = x_range,
             y_range = y_range,
+            active_scroll = 'wheel_zoom',
             sizing_mode='stretch_both',
         )
         self.legend = Div(
