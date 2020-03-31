@@ -67,13 +67,13 @@ class CategoryDataFrame(MetaDataFrame):
             field = self[i]['field']
             query_dict = json.loads(self[i]['query'])
             for k in query_dict:
-                if field not in self.dfc[k]:
+                if field not in self.dfc[k].columns:
                     # Inititalize
                     self.dfc.__getitem__(k,inplace=True)[field] = -1
                 if query_dict[k]:
                     self.dfc.loc[k, self.dfc.eval(k, query_dict[k]), [field]] = i
                 else:
-                    self.dfc.__getitem__(k,inplace=True)[field] = i
+                    self.dfc.loc[k, self.dfc.eval(k, 'index'), [field]] = i
     def __setitem__(self, i, v):
         assert isinstance(i, int)
         assert i <= len(self.df)
@@ -170,7 +170,7 @@ class Image(DataFrameCollection):
         sel_line = self.shape.df['shape_class'] == 'LineShape'
         lineshape = self.shape.df[sel_line]
         line = pd.concat([build(i,r) for i,r in lineshape.iterrows()], sort=True)
-        line['category'] = line['category'].astype('category')
+        line.loc[:,['category']] = line['category'].astype('category')
         category = np.unique(line['category'])
         color_map = {c : self.category[c]['color'] for c in category}
         label_map = {c : self.category[c]['label'] for c in category}
