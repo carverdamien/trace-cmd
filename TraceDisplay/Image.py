@@ -111,14 +111,15 @@ class DefaultCategory(object):
     def __call__(self, image):
         data = []
         index = []
-        columns = ['color', 'label', 'query']
+        columns = ['color', 'label', 'field', 'query']
         category = 0
         for k in image:
             index.append(category)
             color = next(self.color)
             label = k
-            query = json.dumps({k:'category != %d' % category})
-            data.append([color, label, query])
+            field = 'line0.category'
+            query = json.dumps({k:''})
+            data.append([color, label, field, query])
             category+=1
         return pd.DataFrame(data, index=index, columns=columns)
 
@@ -146,8 +147,7 @@ class CategoryDataFrame(MetaDataFrame):
     def apply(self):
         for i in self:
             field = 'category'
-            # TODO:
-            # field = self[i]['field']
+            field = self[i]['field']
             query_dict = json.loads(self[i]['query'])
             for k in query_dict:
                 if query_dict[k]:
@@ -157,10 +157,9 @@ class CategoryDataFrame(MetaDataFrame):
     def __setitem__(self, i, v):
         assert isinstance(i, int)
         assert i <= len(self.df)
-        # TODO:
-        # field = v['field']
         label = v['label']
         color = v['color']
+        field = v['field']
         query = v['query']
         if isinstance(query, str):
             query_str = query
@@ -178,17 +177,17 @@ class CategoryDataFrame(MetaDataFrame):
         super(CategoryDataFrame, self).__setitem__(
             i,
             {
-                # 'field' : field,
                 'label' : label,
                 'color' : color,
+                'field' : field,
                 'query' : query_str,
             },
         )
-    def append(self, label, color, query):
+    def append(self, label, color, field, query):
         super(CategoryDataFrame, self).append({
-            # 'field' : field,
             'label' : label,
             'color' : color,
+            'field' : field,
             'query' : query,
         })
 
@@ -245,17 +244,20 @@ class Image(DataFrameCollection):
         for i, c in category.iterrows():
             label = c['label']
             color = c['color']
+            field = c['field']
             query = c['query']
-            # TODO:
-            # field = c['field'] # 'line0.category'
-            # TODO: self.category.append(field, label, color, query)
-            self.category.append(label, color, query)
+            self.category.append(label, color, field, query)
 
     def line(self):
         def df(k):
             shape_fields = SHAPE_CLASS[self.shape[k]['shape_class']].shape_fields
-            todrop = list(filter(lambda k : k not in shape_fields, self[k].columns))
-            return self[k].drop(columns=todrop)
+            return pd.DataFrame({
+                'x0' : np.array(self[k]['x0'],dtype=float),
+                'x1' : np.array(self[k]['x1'],dtype=float),
+                'y0' : np.array(self[k]['y0'],dtype=float),
+                'y1' : np.array(self[k]['y1'],dtype=float),
+                'category' : np.array(self[k]['line0.category'],dtype=int),
+            })
         self.category.apply()
         iterator = filter(lambda k: k in self.shape and self.shape[k]['shape_class'] == 'LineShape', self)
         line = pd.concat([df(k) for k in iterator], sort=True)
