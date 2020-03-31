@@ -2,6 +2,12 @@
 from Trace import Trace
 import logging
 import os
+import pandas as pd
+MAX = 999999
+pd.options.display.max_rows = MAX
+pd.options.display.max_columns = MAX
+pd.options.display.max_colwidth = MAX
+pd.options.display.width = MAX
 
 def Trace_timeline(trace_path, timestamp, size):
     t = Trace()
