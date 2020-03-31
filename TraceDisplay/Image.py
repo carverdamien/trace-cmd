@@ -146,10 +146,12 @@ class CategoryDataFrame(MetaDataFrame):
         super(CategoryDataFrame, self).__init__(dfc, df)
     def apply(self):
         for i in self:
-            field = 'category'
             field = self[i]['field']
             query_dict = json.loads(self[i]['query'])
             for k in query_dict:
+                if field not in self.dfc[k]:
+                    # Inititalize
+                    self.dfc.__getitem__(k,inplace=True)[field] = -1
                 if query_dict[k]:
                     self.dfc.loc[k, self.dfc.eval(k, query_dict[k]), [field]] = i
                 else:
