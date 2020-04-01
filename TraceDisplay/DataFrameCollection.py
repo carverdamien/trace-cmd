@@ -10,15 +10,13 @@ class FileExtensionError(Exception):
         self.expected_extension = expected_extension
     pass
 
-class Loc(object):
-    def __init__(self, df):
-        self.df = df
+class MetaDataFrameLoc(object):
+    def __init__(self, mdf):
+        self.mdf = mdf
     def __setitem__(self, k, v):
-        k, i, c, = k
-        self.df[k].loc[i,c] = v
+        self.mdf.df.loc[k] = v
     def __getitem__(self, k):
-        k,i,c = k
-        return self.df[k].loc[i,c]
+        return self.mdf.df.loc[k]
 
 class MetaDataFrame(object):
     def __init__(self, dfc, df):
@@ -30,6 +28,7 @@ class MetaDataFrame(object):
         self.dfc = dfc
         self.df = df
         self.df_at_init = df
+        self.loc = MetaDataFrameLoc(self)
     def __hasattr__(self, k):
         if k not in ['df']:
             return super(MetaDataFrame, self).__hasattr__(k)
@@ -122,13 +121,23 @@ class FilterDataFrame(MetaDataFrame):
         else:
             return self.df._repr_html_()
 
+class DataFrameCollectionLoc(object):
+    def __init__(self, df):
+        self.df = df
+    def __setitem__(self, k, v):
+        k, i, c, = k
+        self.df[k].loc[i,c] = v
+    def __getitem__(self, k):
+        k,i,c = k
+        return self.df[k].loc[i,c]
+
 class DataFrameCollection(object):
     def __init__(self, dict_of_data_frames={}, use_filter=True):
         self.override_getitem = self.getitem
         self.override_setitem = self.setitem
         self.private_key = []
         self._df = {}
-        self.loc = Loc(self._df)
+        self.loc = DataFrameCollectionLoc(self._df)
         if use_filter:
             FilterDataFrame(self)
         assert isinstance(dict_of_data_frames, dict)

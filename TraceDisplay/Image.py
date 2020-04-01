@@ -71,6 +71,8 @@ class CategoryDataFrame(MetaDataFrame):
         super(CategoryDataFrame, self).__init__(dfc, df)
     def apply(self):
         for i in self:
+            if not self[i]['active']:
+                continue
             field = self[i]['field']
             query_dict = json.loads(self[i]['query'])
             for k in query_dict:
@@ -175,6 +177,8 @@ class Image(DataFrameCollection):
 
     def line(self):
         def build(i, line):
+            if not line['active']:
+                return pd.DataFrame()
             shape_field = json.loads(line['shape_field'])
             if len(shape_field) == 0:
                 logging.warn(f'shape {i} is empty')
