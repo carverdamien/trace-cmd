@@ -162,6 +162,9 @@ class Image(DataFrameCollection):
     def line(self):
         def build(i, line):
             shape_field = json.loads(line['shape_field'])
+            if len(shape_field) == 0:
+                logging.warn(f'shape {i} is empty')
+                return pd.DataFrame()
             return pd.concat([pd.DataFrame({
                 'x0' : np.array(self.eval(k,shape_field[k]['x0']).values, dtype=float),
                 'x1' : np.array(self.eval(k,shape_field[k]['x1']).values, dtype=float),
