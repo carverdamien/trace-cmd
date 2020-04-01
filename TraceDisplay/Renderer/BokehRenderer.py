@@ -26,9 +26,11 @@ notebook.kernel.execute("BOKEH_RENDERER["+brid+"].figure_range(ax="+ax+",start="
 }
 """
 
-def default_rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key):
-    x_range = (xmin, xmax)
-    y_range = (ymin, ymax)
+def default_rendering(size, ranges, line, color_key):
+    plot_width, plot_height = size
+    x_range, y_range = ranges
+    xmin, xmax = x_range
+    ymin, ymax = y_range
     dw, dh = xmax - xmin, ymax - ymin
     cvs = ds.Canvas(
         plot_width=plot_width,
@@ -111,13 +113,12 @@ class BokehRenderer(object):
         self.update_all(reset_ranges=True)
 
     def update_image(self, size, ranges, line, color_map):
-        plot_width, plot_height = size
         x_range, y_range = ranges
         xmin, xmax = x_range
         ymin, ymax = y_range
         dw, dh = xmax - xmin, ymax - ymin
         color_key = [color_map[k] for k in sorted(color_map.keys())]
-        image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
+        image = self.rendering(size, ranges, line, color_key)
         self.image = image
         self.source.data.update(dict(image=[image.data],
                                      x=[xmin],
