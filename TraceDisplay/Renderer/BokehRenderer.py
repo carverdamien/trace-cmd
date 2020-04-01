@@ -29,9 +29,6 @@ notebook.kernel.execute("BOKEH_RENDERER["+brid+"].figure_range(ax="+ax+",start="
 def default_rendering(size, ranges, line, color_key):
     plot_width, plot_height = size
     x_range, y_range = ranges
-    xmin, xmax = x_range
-    ymin, ymax = y_range
-    dw, dh = xmax - xmin, ymax - ymin
     cvs = ds.Canvas(
         plot_width=plot_width,
         plot_height=plot_height,
