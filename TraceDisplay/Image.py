@@ -133,6 +133,9 @@ class Image(DataFrameCollection):
         # TODO: rename build from_trace
         if shape is not None:
             raise Exception('TODO')
+        for k,v in trace.items():
+            assert v.index.name == 'timestamp'
+            assert 'cpu' in v.columns
         for k in trace:
             self[k] = trace[k]
         shape = {
