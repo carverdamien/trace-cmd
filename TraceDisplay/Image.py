@@ -22,21 +22,28 @@ class ShapeDataFrame(MetaDataFrame):
         assert i <= len(self.df)
         shape_class = v['shape_class']
         shape_field = v['shape_field']
+        active      = v.get('active', True)
         if isinstance(shape_field, str):
             shape_field_str = shape_field
             shape_field_dict = json.loads(shape_field)
         if isinstance(shape_field, dict):
             shape_field_dict = shape_field
             shape_field_str = json.dumps(shape_field)
+        assert isinstance(shape_class, str)
+        assert isinstance(active, bool)
+        assert isinstance(shape_field_dict, dict)
+        assert isinstance(shape_field_str, str)
+        assert shape_class in SHAPE_FIELD
         for k in shape_field_dict:
             assert k in self.dfc
             for field in SHAPE_FIELD[shape_class]:
                 assert field in shape_field_dict[k]
                 assert isinstance(shape_field_dict[k][field], str)
-        item = {
-            'shape_class':shape_class,
-            'shape_field':shape_field_str,
-        }
+        item = dict(
+            shape_class=shape_class,
+            shape_field=shape_field_str,
+            active=active,
+        )
         super(ShapeDataFrame, self).__setitem__(i,item)
 
 DEFAULT_COLOR_VALUE = [
@@ -77,16 +84,18 @@ class CategoryDataFrame(MetaDataFrame):
     def __setitem__(self, i, v):
         assert isinstance(i, int)
         assert i <= len(self.df)
-        label = v['label']
-        color = v['color']
-        field = v['field']
-        query = v['query']
+        label  = v['label']
+        color  = v['color']
+        field  = v['field']
+        query  = v['query']
+        active = v.get('active', True)
         if isinstance(query, str):
             query_str = query
             query_dict = json.loads(query)
         if isinstance(query, dict):
             query_dict = query
             query_str = json.dumps(query)
+        assert isinstance(active, bool)
         assert isinstance(label, str)
         assert isinstance(color, str)
         assert isinstance(query_dict, dict)
@@ -96,20 +105,23 @@ class CategoryDataFrame(MetaDataFrame):
             assert isinstance(query_dict[k], str)
         super(CategoryDataFrame, self).__setitem__(
             i,
-            {
-                'label' : label,
-                'color' : color,
-                'field' : field,
-                'query' : query_str,
-            },
+            dict(
+                label=label,
+                color=color,
+                field=field,
+                query=query_str,
+                active=active,
+            ),
         )
-    def append(self, label, color, field, query):
-        super(CategoryDataFrame, self).append({
-            'label' : label,
-            'color' : color,
-            'field' : field,
-            'query' : query,
-        })
+    def append(self, label, color, field, query, active=True):
+        # TODO: RM this function
+        super(CategoryDataFrame, self).append(dict(
+            label=label,
+            color=color,
+            field=field,
+            query=query,
+            active=active,
+        ))
 
 class Image(DataFrameCollection):
     def __init__(self, *args, **kwargs):
@@ -140,6 +152,7 @@ class Image(DataFrameCollection):
             self[k] = trace[k]
         shape = {
             'shape_class' : 'LineShape',
+            'active' : True,
             'shape_field' : {k:{
                 'x0':'timestamp',
                 'y0':'cpu',
@@ -157,7 +170,8 @@ class Image(DataFrameCollection):
             color = next(ccolor)
             field = 'line0_category'
             query = json.dumps({k:''})
-            self.category.append(label, color, field, query)
+            active = True
+            self.category.append(label, color, field, query, active)
 
     def line(self):
         def build(i, line):
