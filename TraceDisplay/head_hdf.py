@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.7
 import pandas as pd
 import os
+pd.set_option('max_colwidth', 999)
+pd.set_option('max_columns', 999)
 
 def main(hdf_path):
     with pd.HDFStore(hdf_path) as store:
