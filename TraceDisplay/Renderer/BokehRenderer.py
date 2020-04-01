@@ -74,7 +74,7 @@ class BokehRenderer(object):
         self.figure.x_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'x'))
         self.figure.y_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'y'))
         self.notebook_handle = None
-        self.colored_image = None
+        self.image_model = None
         self.image = None
         self.rendering = default_rendering
         self.source = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
@@ -89,8 +89,7 @@ class BokehRenderer(object):
         self.notify_update = []
 
     def reset_ranges(self):
-        ci = self.colored_image
-        line, color_map, label_map = self.colored_image.line()
+        line, color_map, label_map = self.image_model.line()
         xmin = min(min(line['x0']), min(line['x1']))
         xmax = max(max(line['x0']), max(line['x1']))
         ymin = min(min(line['y0']), min(line['y1']))
@@ -100,9 +99,9 @@ class BokehRenderer(object):
             'y': {'start':ymin, 'end':ymax},
         })
 
-    def render(self, ci):
-        assert isinstance(ci, Image)
-        self.colored_image = ci
+    def render(self, image_model):
+        assert isinstance(image_model, Image)
+        self.image_model = image_model
         self.reset_ranges()
         self.update()
 
@@ -113,9 +112,9 @@ class BokehRenderer(object):
         x_range = (xmin, xmax)
         y_range = (ymin, ymax)
         dw, dh = xmax - xmin, ymax - ymin
-        if self.colored_image is None:
+        if self.image_model is None:
             return
-        line, color_map, label_map = self.colored_image.line()
+        line, color_map, label_map = self.image_model.line()
         legend = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
             [
                 '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
@@ -150,7 +149,7 @@ class BokehRenderer(object):
         # print(self.figure.x_range.start, self.figure.x_range.end)
         # print(self.figure.y_range.start, self.figure.y_range.end)
         # print(f"{self._figure_range}")
-        # print(self.colored_image._df['/filter'])
+        # print(self.image_model._df['/filter'])
         self.updateImage()
         if self.notebook_handle:
             push_notebook(handle=self.notebook_handle)
