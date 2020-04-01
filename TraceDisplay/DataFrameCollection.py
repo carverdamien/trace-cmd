@@ -123,11 +123,10 @@ class FilterDataFrame(MetaDataFrame):
             return self.df._repr_html_()
 
 class DataFrameCollection(object):
-    PRIVATE_KEYS = [] # TODO: rm
     def __init__(self, dict_of_data_frames={}, use_filter=True):
         self.override_getitem = self.getitem
         self.override_setitem = self.setitem
-        self.private_key = self.__class__.PRIVATE_KEYS.copy()
+        self.private_key = []
         self._df = {}
         self.loc = Loc(self._df)
         if use_filter:
