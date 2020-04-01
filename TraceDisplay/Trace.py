@@ -14,7 +14,7 @@ def nxts_X(df, X):
     for x in X_unique:
         sel = X_values == x
         next_timestamp[idx[sel][:-1]] = next_timestamp[idx[sel][1:]]
-    df[f'nxts({X})'] = next_timestamp
+    df[f'nxts_{X}'] = next_timestamp
     return df
 
 NXTS_X = {
