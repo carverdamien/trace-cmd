@@ -178,5 +178,5 @@ class BokehRenderer(object):
         self.notebook_handle = show(self.root, notebook_handle=True)
         interact_manual(self.update)
 
-    def to_html(self):
+    def _repr_html_(self):
         return file_html(self.root, INLINE, '')
