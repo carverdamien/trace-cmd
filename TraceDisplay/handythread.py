@@ -76,59 +76,47 @@ def sequential(iter_args, do=True):
 		return f
 	return wrap
 
-def test(SIZE, MAX_PARALLEL, mode):
-	import numpy as np
-	import pandas as pd
-	import itertools
-	import time
-	# print('Alloc')
-	data = np.random.randint(MAX_PARALLEL, size=SIZE)
-	timestamp = np.cumsum(np.random.randint(1, 1000, size=SIZE))
-
-	nxt = np.array(timestamp)
-	idx = np.arange(len(nxt))
-	unique = np.unique(data)
-
-	iter_args = itertools.product(unique)
-
-	start = time.time()
-	# print('start')
-	@mode(iter_args)
-	def task(u):
-		# These are numpy operations that release the python Global Interpreter Lock,
-		# Ergo parallelism
-		sel = data == u
-		nxt[idx[sel][:-1]] = nxt[idx[sel][1:]]
-	ctx = task()
-	end = time.time()
-	took = end-start
-	# print('end')
-	# print(f'took {took}')
-	# if SIZE <= 100:
-	# 	print(pd.DataFrame({
-	# 		'data' : data,
-	# 		'timestamp' : timestamp,
-	# 		'nxt' : nxt,
-	# 	}))
-	return took
-
 class TestParallel(unittest.TestCase):
-	def test_filter(self):
+	def test_numpy(self):
 		import itertools
+		import numpy as np
+		import time
+		def timeit(func, args):
+			start = time.time()
+			value = func(*args)
+			end   = time.time()
+			return end-start, value
+		def allocate(SIZE, MAX_PARALLEL):
+			data = np.random.randint(MAX_PARALLEL, size=SIZE)
+			timestamp = np.cumsum(np.random.randint(1, 1000, size=SIZE))
+			nxt = np.array(timestamp)
+			idx = np.arange(len(nxt))
+			unique = np.unique(data)
+			return (data, timestamp, idx, unique), nxt
+		def solve(problem, solution, mode):
+			data, timestamp, idx, unique = problem
+			nxt = solution
+			iter_args = itertools.product(unique)
+			@mode(iter_args)
+			def task(u):
+				# These are numpy operations that release the python Global Interpreter Lock,
+				# Ergo parallelism
+				sel = data == u
+				nxt[idx[sel][:-1]] = nxt[idx[sel][1:]]
 		TESTS = itertools.product(
 			[100000, 1000000, 10000000, 100000000],
 			[2,10,100]
 		)
 		for SIZE, MAX_PARALLEL in TESTS:
-			parallel_took   = test(SIZE, MAX_PARALLEL, parallel)
-			sequential_took = test(SIZE, MAX_PARALLEL, sequential)
+			problem, solution = allocate(SIZE, MAX_PARALLEL)
+			solution_sequential = solution
+			solution_parallel   = solution.copy()
+			self.assertFalse(solution_sequential is solution_parallel)
+			sequential_took, value = timeit(solve, (problem, solution_sequential, sequential))
+			parallel_took,   value = timeit(solve, (problem, solution_parallel,   parallel  ))
+			self.assertTrue(np.array_equal(solution_sequential,solution_parallel))
 			diff = "%+2.f" % ((sequential_took-parallel_took)/sequential_took*100)
 			logging.info(f'{diff}% ({SIZE},{MAX_PARALLEL})')
-			# if parallel_took < sequential:
-			# 	faster = 'parallel'
-			# else:
-			# 	faster = 'sequential'
-			# print(f'{faster}({SIZE},{MAX_PARALLEL}) is faster')
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
