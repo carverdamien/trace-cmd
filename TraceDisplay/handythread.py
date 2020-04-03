@@ -93,7 +93,7 @@ class TestParallel(unittest.TestCase):
 			idx = np.arange(len(nxt))
 			unique = np.unique(data)
 			return (data, timestamp, idx, unique), nxt
-		def solve(problem, solution, mode):
+		def solve(problem, solution, mode, ctx):
 			data, timestamp, idx, unique = problem
 			nxt = solution
 			iter_args = itertools.product(unique)
@@ -103,21 +103,28 @@ class TestParallel(unittest.TestCase):
 				# Ergo parallelism
 				sel = data == u
 				nxt[idx[sel][:-1]] = nxt[idx[sel][1:]]
+				return np.sum(sel)
+			if ctx:
+				return task()
 		TESTS = itertools.product(
 			[100000, 1000000, 10000000, 100000000],
-			[2,10,100]
+			[2,10,100],
+			[True, False],
 		)
-		for SIZE, MAX_PARALLEL in TESTS:
+		for SIZE, MAX_PARALLEL, CTX in TESTS:
 			problem, solution = allocate(SIZE, MAX_PARALLEL)
 			solution_sequential = solution
 			solution_parallel   = solution.copy()
 			self.assertFalse(solution_sequential is solution_parallel)
-			sequential_took, value = timeit(solve, (problem, solution_sequential, sequential))
-			parallel_took,   value = timeit(solve, (problem, solution_parallel,   parallel  ))
+			sequential_took, sequential_value = timeit(solve, (problem, solution_sequential, sequential, CTX))
+			parallel_took,   parallel_value   = timeit(solve, (problem, solution_parallel,   parallel  , CTX))
 			self.assertTrue(np.array_equal(solution_sequential,solution_parallel))
 			diff = "%+2.f" % ((sequential_took-parallel_took)/sequential_took*100)
 			logging.info(f'{diff}% ({SIZE},{MAX_PARALLEL})')
-
+			if CTX:
+				self.assertTrue(len(sequential_value), len(parallel_value))
+				for i in range(len(sequential_value)):
+					self.assertEquals(sequential_value[i].value, parallel_value[i].value)
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     unittest.main()
