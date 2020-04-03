@@ -2,6 +2,17 @@ from threading import Thread, Semaphore
 from multiprocessing import cpu_count
 import unittest, logging
 
+# TODO
+#
+# Catch Exceptions
+# Return Values
+# Allow use of processes
+# Tests if sequential and parallel return same values
+# Remove print
+# Clear comments
+# Rename file to parallel.py
+#
+
 def parallel(iter_args, sem_value=cpu_count()):
 	def wrap(func):
 		def f():
