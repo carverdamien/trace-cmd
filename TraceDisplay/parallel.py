@@ -92,7 +92,7 @@ def parallel_process(iter_args, do=True, sem_value=cpu_count()):
 		return f
 	return wrap
 
-def sequential(iter_args, do=True):
+def sequential(iter_args, do=True, sem_value=None):
 	def wrap(func):
 		def f():
 			ctx = []
