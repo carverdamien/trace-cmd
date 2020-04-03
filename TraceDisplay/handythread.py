@@ -1,5 +1,6 @@
 from threading import Thread, Semaphore
 from multiprocessing import cpu_count
+import unittest, logging
 
 def parallel(iter_args, sem_value=cpu_count()):
 	def wrap(func):
@@ -28,6 +29,10 @@ def sequential(iter_args):
 	return wrap
 
 def test(SIZE, MAX_PARALLEL, mode):
+	import numpy as np
+	import pandas as pd
+	import itertools
+	import time
 	# print('Alloc')
 	data = np.random.randint(MAX_PARALLEL, size=SIZE)
 	timestamp = np.cumsum(np.random.randint(1, 1000, size=SIZE))
@@ -59,22 +64,24 @@ def test(SIZE, MAX_PARALLEL, mode):
 	# 	}))
 	return took
 
+class TestParallel(unittest.TestCase):
+	def test_filter(self):
+		import itertools
+		TESTS = itertools.product(
+			[100000, 1000000, 10000000, 100000000],
+			[2,10,100]
+		)
+		for SIZE, MAX_PARALLEL in TESTS:
+			parallel_took   = test(SIZE, MAX_PARALLEL, parallel)
+			sequential_took = test(SIZE, MAX_PARALLEL, sequential)
+			diff = "%+2.f" % ((sequential_took-parallel_took)/sequential_took*100)
+			logging.info(f'{diff}% ({SIZE},{MAX_PARALLEL})')
+			# if parallel_took < sequential:
+			# 	faster = 'parallel'
+			# else:
+			# 	faster = 'sequential'
+			# print(f'{faster}({SIZE},{MAX_PARALLEL}) is faster')
+
 if __name__ == '__main__':
-	import numpy as np
-	import pandas as pd
-	import itertools
-	import time
-	TESTS = itertools.product(
-		[100000, 1000000, 10000000, 100000000],
-		[2,10,100]
-	)
-	for SIZE, MAX_PARALLEL in TESTS:
-		parallel_took   = test(SIZE, MAX_PARALLEL, parallel)
-		sequential_took = test(SIZE, MAX_PARALLEL, sequential)
-		diff = "%+2.f" % ((sequential_took-parallel_took)/sequential_took*100)
-		print(f'{diff}% ({SIZE},{MAX_PARALLEL})')
-		# if parallel_took < sequential:
-		# 	faster = 'parallel'
-		# else:
-		# 	faster = 'sequential'
-		# print(f'{faster}({SIZE},{MAX_PARALLEL}) is faster')
+    logging.basicConfig(level=logging.DEBUG)
+    unittest.main()
