@@ -4,8 +4,7 @@ import unittest, logging
 
 # TODO
 #
-# Allow use of processes
-# Rename file to parallel.py
+# use parallel_process in test_numpy
 #
 
 class Context(object):
@@ -26,7 +25,7 @@ def parallel(iter_args, do=True, sem_value=cpu_count(), process=False):
 				sem.acquire()
 				if process:
 					q = Queue()
-					def target(q, *args):
+					def target(q, args):
 						value = None
 						exception = None
 						try:
@@ -34,11 +33,11 @@ def parallel(iter_args, do=True, sem_value=cpu_count(), process=False):
 						except Exception as e:
 							exception = e
 							pass
-						q.put((value, exception))
+						q.put(value)
+						q.put(exception)
 					Process(target=target, args=(q,ctx.args)).start()
-					value, exception = q.get()
-					ctx.value     = value
-					ctx.exception = exception
+					ctx.value     = q.get()
+					ctx.exception = q.get()
 					pass
 				else:
 					try:
@@ -95,11 +94,14 @@ MODE = { k.__name__ : k for k in [sequential, parallel, parallel_process] }
 
 class TestParallel(unittest.TestCase):
 	def test_exception(self):
+		import itertools
 		def solve(n, mode, ctx):
-			@mode(list(range(n)))
+			iter_args = itertools.product(list(range(n)))
+			@mode(iter_args)
 			def rez(i):
 				if i == n/2:
 					raise Exception(f'{i} == {n}/2')
+				return i*2
 			if ctx:
 				return rez()
 		N = 100
@@ -110,12 +112,15 @@ class TestParallel(unittest.TestCase):
 			]
 			for j in range(len(solve_return)):
 				if ctx:
-					self.assertTrue(len(solve_return[0]),len(solve_return[j]))
-					for i in range(len(solve_return[0])):
-						self.assertEqual(solve_return[0][i].exception, solve_return[j][i].exception)
-					self.assertEqual(solve_return[j][N/2].exception.message == f'{N/2} == {N}/2')
+					self.assertTrue(len(solve_return[0][1]),len(solve_return[j][1]))
+					for i in range(len(solve_return[0][1])):
+						self.assertEqual(str(solve_return[0][1][i].exception), str(solve_return[j][1][i].exception))
+						self.assertEqual(solve_return[0][1][i].value, solve_return[j][1][i].value)
+						if solve_return[j][1][i].value is not None:
+							self.assertEqual(solve_return[j][1][i].value, i*2)
+					self.assertEqual(str(solve_return[j][1][N//2].exception), f'{N//2} == {N}/2')
 				else:
-					self.assertTrue(solve_return[j] is None)
+					self.assertTrue(solve_return[j][1] is None)
 	def test_numpy(self):
 		import itertools
 		import numpy as np
