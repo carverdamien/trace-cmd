@@ -4,12 +4,7 @@ import unittest, logging
 
 # TODO
 #
-# Catch Exceptions
-# Return Values
 # Allow use of processes
-# Tests if sequential and parallel return same values
-# Remove print
-# Clear comments
 # Rename file to parallel.py
 #
 
@@ -32,7 +27,7 @@ def parallel(iter_args, do=True, sem_value=cpu_count()):
 				try:
 					ctx.value = func(*(ctx.args))
 					pass
-				except Exception as e:
+				except Exception as exception:
 					ctx.exception = exception
 					pass
 				sem.release()
@@ -77,6 +72,27 @@ def sequential(iter_args, do=True):
 	return wrap
 
 class TestParallel(unittest.TestCase):
+	def test_exception(self):
+		def solve(n, mode, ctx):
+			@mode(list(range(n)))
+			def rez(i):
+				if i == n/2:
+					raise Exception(f'{i} == {n}/2')
+			if ctx:
+				return rez()
+		N = 100
+		for ctx in [True, False]:
+			parallel_ctx   = solve(N, parallel, ctx)
+			sequential_ctx = solve(N, sequential, ctx)
+			if ctx:
+				self.assertTrue(len(sequential_ctx), len(parallel_ctx))
+				for i in range(len(sequential_ctx)):
+					self.assertEqual(sequential_ctx[i].exception, parallel_ctx[i].exception)
+				self.assertEqual(sequential_ctx[N/2].exception.message == f'{N/2} == {N}/2')
+				self.assertEqual(parallel_ctx[N/2].exception.message == f'{N/2} == {N}/2')
+			else:
+				self.assertTrue(sequential_ctx is None)
+				self.assertTrue(parallel_ctx is None)
 	def test_numpy(self):
 		import itertools
 		import numpy as np
@@ -124,7 +140,10 @@ class TestParallel(unittest.TestCase):
 			if CTX:
 				self.assertTrue(len(sequential_value), len(parallel_value))
 				for i in range(len(sequential_value)):
-					self.assertEquals(sequential_value[i].value, parallel_value[i].value)
+					self.assertEqual(sequential_value[i].value, parallel_value[i].value)
+			else:
+				self.assertTrue(sequential_value is None)
+				self.assertTrue(parallel_value is None)
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     unittest.main()
