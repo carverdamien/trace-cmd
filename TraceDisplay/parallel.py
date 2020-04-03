@@ -1,6 +1,5 @@
-from threading import Thread, Semaphore
-from multiprocessing import cpu_count, Process, Queue
-import unittest, logging
+from multiprocessing import cpu_count
+import unittest, logging, sys
 
 # TODO
 #
@@ -16,37 +15,22 @@ class Context(object):
 		self.value = None
 		self.exception = None
 
-def parallel(iter_args, do=True, sem_value=cpu_count(), process=False):
+def parallel_thread(iter_args, do=True, sem_value=cpu_count()):
+	from threading import Thread, Semaphore
 	def wrap(func):
 		def f():
 			ctx = []
 			sem = Semaphore(sem_value)
 			def target(ctx):
 				sem.acquire()
-				if process:
-					q = Queue()
-					def target(q, args):
-						value = None
-						exception = None
-						try:
-							value = func(*args)
-						except Exception as e:
-							exception = e
-							pass
-						q.put(value)
-						q.put(exception)
-					Process(target=target, args=(q,ctx.args)).start()
-					ctx.value     = q.get()
-					ctx.exception = q.get()
+				try:
+					ctx.value = func(*(ctx.args))
 					pass
-				else:
-					try:
-						ctx.value = func(*(ctx.args))
-						pass
-					except Exception as exception:
-						ctx.exception = exception
-						pass
+				except Exception as exception:
+					ctx.exception = exception
+					pass
 				sem.release()
+				return
 			logging.debug('Spawning threads')
 			for args in iter_args:
 				c = Context(args)
@@ -63,8 +47,50 @@ def parallel(iter_args, do=True, sem_value=cpu_count(), process=False):
 		return f
 	return wrap
 
-def parallel_process(iter_args, do=True, sem_value=cpu_count(), process=True):
-	return parallel(iter_args, do, sem_value, process)
+def parallel_process(iter_args, do=True, sem_value=cpu_count()):
+	from multiprocessing import Process, Queue, Semaphore
+	def wrap(func):
+		def f():
+			ctx = []
+			process = []
+			sem = Semaphore(sem_value)
+			q = Queue()
+			def target(i,q,args):
+				value = None
+				exception = None
+				sem.acquire()
+				try:
+					value = func(*args)
+					pass
+				except Exception as e:
+					exception = e
+					pass
+				q.put((i,value,exception))
+				sem.release()
+				return
+			logging.debug('Spawning processes')
+			i = 0
+			for args in iter_args:
+				c = Context(args)
+				ctx.append(c)
+				p = Process(target=target, args=(i,q,args))
+				p.start()
+				process.append(p)
+				i+=1
+			logging.debug('Pulling')
+			for _ in range(len(process)):
+				i, value, exception = q.get()
+				ctx[i].value = value
+				ctx[i].exception = exception
+			logging.debug('Joining processes')
+			for p in process:
+				p.join()
+			return ctx
+		if do:
+			ctx = f()
+			return lambda : ctx
+		return f
+	return wrap
 
 def sequential(iter_args, do=True):
 	def wrap(func):
@@ -90,7 +116,11 @@ def sequential(iter_args, do=True):
 		return f
 	return wrap
 
-MODE = { k.__name__ : k for k in [sequential, parallel, parallel_process] }
+# Default parallel is thread
+def parallel(iter_args, do=True, sem_value=cpu_count()):
+	return parallel_thread(iter_args, do, sem_value)
+
+MODE = { k.__name__ : k for k in [sequential, parallel_thread, parallel_process] }
 
 class TestParallel(unittest.TestCase):
 	def test_exception(self):
