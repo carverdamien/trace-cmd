@@ -22,7 +22,7 @@ class Context(object):
 		self.value = None
 		self.exception = None
 
-def parallel(iter_args, sem_value=cpu_count()):
+def parallel(iter_args, do=True, sem_value=cpu_count()):
 	def wrap(func):
 		def f():
 			ctx = []
@@ -46,10 +46,13 @@ def parallel(iter_args, sem_value=cpu_count()):
 			for c in ctx:
 				c.thread.join()
 			return ctx
+		if do:
+			ctx = f()
+			return lambda : ctx
 		return f
 	return wrap
 
-def sequential(iter_args):
+def sequential(iter_args, do=True):
 	def wrap(func):
 		def f():
 			ctx = []
@@ -67,6 +70,9 @@ def sequential(iter_args):
 				ctx.append(c)
 			logging.debug('End sequential')
 			return ctx
+		if do:
+			ctx = f()
+			return lambda : ctx
 		return f
 	return wrap
 
@@ -85,14 +91,14 @@ def test(SIZE, MAX_PARALLEL, mode):
 
 	iter_args = itertools.product(unique)
 
+	start = time.time()
+	# print('start')
 	@mode(iter_args)
 	def task(u):
 		# These are numpy operations that release the python Global Interpreter Lock,
 		# Ergo parallelism
 		sel = data == u
 		nxt[idx[sel][:-1]] = nxt[idx[sel][1:]]
-	start = time.time()
-	# print('start')
 	ctx = task()
 	end = time.time()
 	took = end-start
