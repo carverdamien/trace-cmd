@@ -1,17 +1,19 @@
 from .DataFrameCollection import DataFrameCollection, FileExtensionError
+from .parallel import parallel_thread
 import os
 import tracecmd
 import pandas as pd
 import numpy as np
 import logging
+import itertools
 
 def nxts_X(df, X):
     next_timestamp = np.array(df.index)
     idx = np.arange(len(next_timestamp))
     X_values = np.array(df[X])
     X_unique = np.unique(X_values)
-    # TODO: in parallel
-    for x in X_unique:
+    @parallel_thread(itertools.product(X_unique))
+    def foreach(x):
         sel = X_values == x
         next_timestamp[idx[sel][:-1]] = next_timestamp[idx[sel][1:]]
     df[f'nxts_{X}'] = next_timestamp
