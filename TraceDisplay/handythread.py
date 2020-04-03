@@ -13,29 +13,60 @@ import unittest, logging
 # Rename file to parallel.py
 #
 
+class Context(object):
+	"""docstring for Context"""
+	def __init__(self, args):
+		super(Context, self).__init__()
+		self.thread = None
+		self.args  = args
+		self.value = None
+		self.exception = None
+
 def parallel(iter_args, sem_value=cpu_count()):
 	def wrap(func):
 		def f():
+			ctx = []
 			sem = Semaphore(sem_value)
-			def target(*args):
+			def target(ctx):
 				sem.acquire()
-				func(*args)
+				try:
+					ctx.value = func(*(ctx.args))
+					pass
+				except Exception as e:
+					ctx.exception = exception
+					pass
 				sem.release()
-			def spawn(*args):
-				t = Thread(target=target, args=args)
-				t.start()
-				return t
-			threads = [spawn(*args) for args in iter_args]
-			for t in threads:
-				t.join()
+			logging.debug('Spawning threads')
+			for args in iter_args:
+				c = Context(args)
+				c.thread = Thread(target=target, args=(c,))
+				c.thread.start()
+				ctx.append(c)
+			logging.debug('Joining threads')
+			for c in ctx:
+				c.thread.join()
+			return ctx
 		return f
 	return wrap
 
 def sequential(iter_args):
 	def wrap(func):
 		def f():
+			ctx = []
+			def target(ctx):
+				try:
+					ctx.value = func(*(ctx.args))
+					pass
+				except Exception as exception:
+					ctx.exception = exception
+					pass
+			logging.debug('Start sequential')
 			for args in iter_args:
-				func(*args)
+				c = Context(args)
+				target(c)
+				ctx.append(c)
+			logging.debug('End sequential')
+			return ctx
 		return f
 	return wrap
 
@@ -62,7 +93,7 @@ def test(SIZE, MAX_PARALLEL, mode):
 		nxt[idx[sel][:-1]] = nxt[idx[sel][1:]]
 	start = time.time()
 	# print('start')
-	task()
+	ctx = task()
 	end = time.time()
 	took = end-start
 	# print('end')
