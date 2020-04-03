@@ -1,5 +1,5 @@
 from threading import Thread, Semaphore
-from multiprocessing import cpu_count
+from multiprocessing import cpu_count, Process, Queue
 import unittest, logging
 
 # TODO
@@ -17,19 +17,36 @@ class Context(object):
 		self.value = None
 		self.exception = None
 
-def parallel(iter_args, do=True, sem_value=cpu_count()):
+def parallel(iter_args, do=True, sem_value=cpu_count(), process=False):
 	def wrap(func):
 		def f():
 			ctx = []
 			sem = Semaphore(sem_value)
 			def target(ctx):
 				sem.acquire()
-				try:
-					ctx.value = func(*(ctx.args))
-					pass
-				except Exception as exception:
+				if process:
+					q = Queue()
+					def target(q, *args):
+						value = None
+						exception = None
+						try:
+							value = func(*args)
+						except Exception as e:
+							exception = e
+							pass
+						q.put((value, exception))
+					Process(target=target, args=(q,ctx.args)).start()
+					value, exception = q.get()
+					ctx.value     = value
 					ctx.exception = exception
 					pass
+				else:
+					try:
+						ctx.value = func(*(ctx.args))
+						pass
+					except Exception as exception:
+						ctx.exception = exception
+						pass
 				sem.release()
 			logging.debug('Spawning threads')
 			for args in iter_args:
@@ -46,6 +63,9 @@ def parallel(iter_args, do=True, sem_value=cpu_count()):
 			return lambda : ctx
 		return f
 	return wrap
+
+def parallel_process(iter_args, do=True, sem_value=cpu_count(), process=True):
+	return parallel(iter_args, do, sem_value, process)
 
 def sequential(iter_args, do=True):
 	def wrap(func):
@@ -71,6 +91,8 @@ def sequential(iter_args, do=True):
 		return f
 	return wrap
 
+MODE = { k.__name__ : k for k in [sequential, parallel, parallel_process] }
+
 class TestParallel(unittest.TestCase):
 	def test_exception(self):
 		def solve(n, mode, ctx):
@@ -82,17 +104,18 @@ class TestParallel(unittest.TestCase):
 				return rez()
 		N = 100
 		for ctx in [True, False]:
-			parallel_ctx   = solve(N, parallel, ctx)
-			sequential_ctx = solve(N, sequential, ctx)
-			if ctx:
-				self.assertTrue(len(sequential_ctx), len(parallel_ctx))
-				for i in range(len(sequential_ctx)):
-					self.assertEqual(sequential_ctx[i].exception, parallel_ctx[i].exception)
-				self.assertEqual(sequential_ctx[N/2].exception.message == f'{N/2} == {N}/2')
-				self.assertEqual(parallel_ctx[N/2].exception.message == f'{N/2} == {N}/2')
-			else:
-				self.assertTrue(sequential_ctx is None)
-				self.assertTrue(parallel_ctx is None)
+			solve_return = [
+				(mode_name, solve(N, mode, ctx))
+				for mode_name, mode in MODE.items()
+			]
+			for j in range(len(solve_return)):
+				if ctx:
+					self.assertTrue(len(solve_return[0]),len(solve_return[j]))
+					for i in range(len(solve_return[0])):
+						self.assertEqual(solve_return[0][i].exception, solve_return[j][i].exception)
+					self.assertEqual(solve_return[j][N/2].exception.message == f'{N/2} == {N}/2')
+				else:
+					self.assertTrue(solve_return[j] is None)
 	def test_numpy(self):
 		import itertools
 		import numpy as np
