@@ -11,6 +11,7 @@ import datashader.transfer_functions as tf
 import pandas as pd
 import numpy as np
 from ..Image import Image
+import logging
 
 BOKEH_RENDERER = {}
 FIGURE_RANGE_JSCODE = """
@@ -25,10 +26,9 @@ notebook.kernel.execute("BOKEH_RENDERER["+brid+"].figure_range(ax="+ax+",start="
 }
 """
 
-def default_rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key):
-    x_range = (xmin, xmax)
-    y_range = (ymin, ymax)
-    dw, dh = xmax - xmin, ymax - ymin
+def default_rendering(size, ranges, line, color_key):
+    plot_width, plot_height = size
+    x_range, y_range = ranges
     cvs = ds.Canvas(
         plot_width=plot_width,
         plot_height=plot_height,
@@ -74,7 +74,7 @@ class BokehRenderer(object):
         self.figure.x_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'x'))
         self.figure.y_range.callback = CustomJS(code=FIGURE_RANGE_JSCODE % (self.brid, 'y'))
         self.notebook_handle = None
-        self.colored_image = None
+        self.image_model = None
         self.image = None
         self.rendering = default_rendering
         self.source = ColumnDataSource(data=dict(image=[], x=[], y=[], dw=[], dh=[]))
@@ -88,44 +88,34 @@ class BokehRenderer(object):
         )
         self.notify_update = []
 
-    def reset_ranges(self):
-        ci = self.colored_image
-        line, color_map, label_map = self.colored_image.line()
+    def push_notebook(self):
+        if self.notebook_handle:
+            push_notebook(handle=self.notebook_handle)
+
+    def update_model(self):
+        line, color_map, label_map = self.image_model.line()
         xmin = min(min(line['x0']), min(line['x1']))
         xmax = max(max(line['x0']), max(line['x1']))
         ymin = min(min(line['y0']), min(line['y1']))
         ymax = max(max(line['y0']), max(line['y1']))
-        self._figure_range.update({
-            'x': {'start':xmin, 'end':xmax},
-            'y': {'start':ymin, 'end':ymax},
-        })
+        self.figure.x_range.reset_start = xmin
+        self.figure.x_range.reset_end   = xmax
+        self.figure.y_range.reset_start = ymin
+        self.figure.y_range.reset_end   = ymax
+        return line, color_map, label_map
 
-    def render(self, ci):
-        assert isinstance(ci, Image)
-        self.colored_image = ci
-        self.reset_ranges()
-        self.update()
+    def render(self, image_model):
+        assert isinstance(image_model, Image)
+        self.image_model = image_model
+        self.update_all(reset_ranges=True)
 
-    def updateImage(self):
-        plot_width, plot_height = self.figure.plot_width, self.figure.plot_height
-        xmin, xmax = self.figure.x_range.start, self.figure.x_range.end
-        ymin, ymax = self.figure.y_range.start, self.figure.y_range.end
-        x_range = (xmin, xmax)
-        y_range = (ymin, ymax)
+    def update_image(self, size, ranges, line, color_map):
+        x_range, y_range = ranges
+        xmin, xmax = x_range
+        ymin, ymax = y_range
         dw, dh = xmax - xmin, ymax - ymin
-        if self.colored_image is None:
-            return
-        line, color_map, label_map = self.colored_image.line()
-        legend = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
-            [
-                '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
-                for c in color_map
-            ] + ['</ul>']
-        )
-        legend = '<div style="overflow:scroll; max-height: 45em;">'+ legend +'</div>'
-        self.legend.text = legend
         color_key = [color_map[k] for k in sorted(color_map.keys())]
-        image = self.rendering(line, xmin, xmax, ymin, ymax, plot_width, plot_height, color_key)
+        image = self.rendering(size, ranges, line, color_key)
         self.image = image
         self.source.data.update(dict(image=[image.data],
                                      x=[xmin],
@@ -135,6 +125,16 @@ class BokehRenderer(object):
         )
         pass
 
+    def update_legend(self, color_map, label_map):
+        text = ''.join(['<ul style="list-style: none;padding-left: 0;">'] +
+            [
+                '<li><span style="color: %s;">%d %s</span></li>' % (color_map[c], c, label_map[c])
+                for c in color_map
+            ] + ['</ul>']
+        )
+        text = '<div style="overflow:scroll; max-height: 45em;">'+ text +'</div>'
+        self.legend.text = text
+
     """ Callback in FIGURE_RANGE_JSCODE """
     def figure_range(self, ax=None, start=None, end=None):
         self._figure_range[ax].update({
@@ -142,24 +142,35 @@ class BokehRenderer(object):
             'end':end,
         })
 
+    def update_ranges(self, reset_ranges=False, notify_update=True):
+        if reset_ranges:
+            self._figure_range['x']['start'] = self.figure.x_range.reset_start
+            self._figure_range['x']['end']   = self.figure.x_range.reset_end
+            self._figure_range['y']['start'] = self.figure.y_range.reset_start
+            self._figure_range['y']['end']   = self.figure.y_range.reset_end
+        xmin = self.figure.x_range.start = self._figure_range['x']['start']
+        xmax = self.figure.x_range.end   = self._figure_range['x']['end']
+        ymin = self.figure.y_range.start = self._figure_range['y']['start']
+        ymax = self.figure.y_range.end   = self._figure_range['y']['end']
+        if notify_update:
+            for func in self.notify_update:
+                func(xmin,xmax,ymin,ymax)
+        return ((xmin,xmax),(ymin,ymax))
+
     def update(self):
-        self.figure.x_range.start = self._figure_range['x']['start']
-        self.figure.x_range.end = self._figure_range['x']['end']
-        self.figure.y_range.start = self._figure_range['y']['start']
-        self.figure.y_range.end = self._figure_range['y']['end']
-        # print(self.figure.x_range.start, self.figure.x_range.end)
-        # print(self.figure.y_range.start, self.figure.y_range.end)
-        # print(f"{self._figure_range}")
-        # print(self.colored_image._df['/filter'])
-        self.updateImage()
-        if self.notebook_handle:
-            push_notebook(handle=self.notebook_handle)
-        for func in self.notify_update:
-            func(self.figure.x_range.start,
-                 self.figure.x_range.end,
-                 self.figure.y_range.start,
-                 self.figure.y_range.end,
-            )
+        self.update_all()
+
+    def update_all(self, push_notebook=True, reset_ranges=False):
+        if self.image_model is None:
+            logging.error('Missing image model')
+            return
+        line, color_map, label_map = self.update_model()
+        size = self.figure.plot_width, self.figure.plot_height
+        ranges = self.update_ranges(reset_ranges=reset_ranges)
+        self.update_image(size, ranges, line, color_map)
+        self.update_legend(color_map, label_map)
+        if push_notebook:
+            self.push_notebook()
         pass
 
     def show(self):
@@ -167,5 +178,5 @@ class BokehRenderer(object):
         self.notebook_handle = show(self.root, notebook_handle=True)
         interact_manual(self.update)
 
-    def to_html(self):
+    def _repr_html_(self):
         return file_html(self.root, INLINE, '')

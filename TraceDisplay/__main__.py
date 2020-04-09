@@ -84,7 +84,7 @@ class TestDataFrameCollection(unittest.TestCase):
         pass
     def test_private_keys(self):
         i = Image()
-        for k in Image.PRIVATE_KEYS:
+        for k in i.private_key:
             def set_fails():
                 i[k] = randomDataFrame()
             self.assertRaises(Exception, set_fails)

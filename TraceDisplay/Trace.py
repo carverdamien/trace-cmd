@@ -1,8 +1,28 @@
 from .DataFrameCollection import DataFrameCollection, FileExtensionError
+from .parallel import parallel_thread
 import os
 import tracecmd
 import pandas as pd
+import numpy as np
 import logging
+import itertools
+
+def nxts_X(df, X):
+    next_timestamp = np.array(df.index)
+    idx = np.arange(len(next_timestamp))
+    X_values = np.array(df[X])
+    X_unique = np.unique(X_values)
+    @parallel_thread(itertools.product(X_unique))
+    def foreach(x):
+        sel = X_values == x
+        next_timestamp[idx[sel][:-1]] = next_timestamp[idx[sel][1:]]
+    df[f'nxts_{X}'] = next_timestamp
+    return df
+
+NXTS_X = {
+    'sched_rq_size_change' : ['rq_cpu'],
+    'sched_switch' : ['cpu'],
+}
 
 class Trace(DataFrameCollection):
     def __init__(self, *args, **kwargs):
@@ -38,6 +58,9 @@ class Trace(DataFrameCollection):
             df[event].set_index('timestamp', inplace=True)
             df[event].sort_index(inplace=True, ascending=True)
         for k,v in df.items():
+            if k in NXTS_X:
+                for X in NXTS_X[k]:
+                    v = nxts_X(v, X)
             self[k] = v
         print_warning(self, path)
     def timeline(self, timestamp=0, size=10, tmin=None, tmax=None):

@@ -6,121 +6,10 @@ import numpy as np
 import itertools
 import json
 
-class Shape(object):
-    """AbstractShape"""
-    shape_class = 'Shape'
-    shape_fields = ['category']
-    def __call__(self, *args, **kwargs):
-        logging.error('AbstractShape should not be called.')
-        return {
-            'category' : [],
-        }
-
-class PointShape(Shape):
-    """AbstractShape"""
-    shape_class = 'PointShape'
-    shape_fields = Shape.shape_fields + ['x','y']
-    def __call__(self, *args, **kwargs):
-        logging.error('AbstractShape should not be called.')
-        return {
-            'category' : [],
-            'x'        : [],
-            'y'        : [],
-        }
-
-class LineShape(Shape):
-    """AbstractShape"""
-    shape_class = 'LineShape'
-    shape_fields = Shape.shape_fields + ['x0','x1','y0','y1']
-    def __call__(self, *args, **kwargs):
-        logging.error('AbstractShape should not be called.')
-        return {
-            'category' : [],
-            'x0'       : [],
-            'x1'       : [],
-            'y0'       : [],
-            'y1'       : [],
-        }
-
-SHAPE_CLASS = {
-    'LineShape' : LineShape,
+SHAPE_FIELD = {
+    # TODO: 'PointShape' : ['x','y','category'],
+    'LineShape' : ['x0','x1','y0','y1','category'],
 }
-
-class DefaultLineShape(LineShape):
-    def __init__(self, key, *args, **kwargs):
-        super(DefaultLineShape, self).__init__(*args, **kwargs)
-        self.key = key
-    def __call__(self, *args, **kwargs):
-        df, = args
-        df = df[self.key]
-        timestamp = np.array(df.index, dtype=float)
-        cpu = np.array(df['cpu'], dtype=float)
-        data = {
-            'x0'       : timestamp,
-            'x1'       : timestamp,
-            'y0'       : cpu,
-            'y1'       : cpu + 0.5,
-            'category' : np.zeros(len(timestamp), dtype=int),
-        }
-        columns = filter(lambda k: k not in ['cpu'], df.columns)
-        for k in columns:
-            assert k not in self.__class__.shape_fields
-            data[k] = df[k]
-        return data
-
-class ShapeCollection(object):
-    def __init__(self, shape={}):
-        self.shape = {}
-        for k,v in shape.items():
-            self[k] = v
-    def __getitem__(self, k):
-        return self.shape[k]
-    def __setitem__(self, k, v):
-        assert isinstance(v, Shape)
-        self.shape[k] = v
-    def __iter__(self):
-        return iter(self.shape)
-    def items(self):
-        return self.shape.items()
-
-def DefaultShapeCollection(trace):
-    return ShapeCollection({
-        k : DefaultLineShape(k)
-        for k in trace
-    })
-
-class DefaultCategory(object):
-    DEFAULT_COLOR_VALUE = [
-        '#660066',
-        '#006633',
-        '#FFCC00',
-        '#CC3333',
-        '#996633',
-        '#000099',
-        '#000000',
-        '#0099CC',
-        '#868F98',
-        '#009999',
-        '#CC9999',
-        '#66CCCC',
-        '#66CC00',
-        '#FF6600',
-    ]
-    def __init__(self):
-        self.color = itertools.cycle(self.__class__.DEFAULT_COLOR_VALUE)
-    def __call__(self, image):
-        data = []
-        index = []
-        columns = ['color', 'label', 'query']
-        category = 0
-        for k in image:
-            index.append(category)
-            color = next(self.color)
-            label = k
-            query = json.dumps({k:'category != %d' % category})
-            data.append([color, label, query])
-            category+=1
-        return pd.DataFrame(data, index=index, columns=columns)
 
 class ShapeDataFrame(MetaDataFrame):
     """docstring for ShapeDataFrame"""
@@ -128,15 +17,51 @@ class ShapeDataFrame(MetaDataFrame):
     KEY  = '/shape'
     def __init__(self, dfc, df=pd.DataFrame()):
         super(ShapeDataFrame, self).__init__(dfc, df)
-    def __setitem__(self, k, v):
-        assert k in self.dfc
-        assert v in SHAPE_CLASS
-        shape_class = SHAPE_CLASS[v]
-        for field in shape_class.shape_fields:
-            assert field in self.dfc[k].columns
-        super(ShapeDataFrame, self).__setitem__(k,{'shape_class':v})
-    def __getitem__(self, k):
-        return  super(ShapeDataFrame, self).__getitem__(k)['shape_class']
+    def __setitem__(self, i, v):
+        assert isinstance(i, int)
+        assert i <= len(self.df)
+        shape_class = v['shape_class']
+        shape_field = v['shape_field']
+        active      = v.get('active', True)
+        if isinstance(shape_field, str):
+            shape_field_str = shape_field
+            shape_field_dict = json.loads(shape_field)
+        if isinstance(shape_field, dict):
+            shape_field_dict = shape_field
+            shape_field_str = json.dumps(shape_field)
+        assert isinstance(shape_class, str)
+        assert isinstance(active, bool)
+        assert isinstance(shape_field_dict, dict)
+        assert isinstance(shape_field_str, str)
+        assert shape_class in SHAPE_FIELD
+        for k in shape_field_dict:
+            assert k in self.dfc
+            for field in SHAPE_FIELD[shape_class]:
+                assert field in shape_field_dict[k]
+                assert isinstance(shape_field_dict[k][field], str)
+        item = dict(
+            shape_class=shape_class,
+            shape_field=shape_field_str,
+            active=active,
+        )
+        super(ShapeDataFrame, self).__setitem__(i,item)
+
+DEFAULT_COLOR_VALUE = [
+    '#660066',
+    '#006633',
+    '#FFCC00',
+    '#CC3333',
+    '#996633',
+    '#000099',
+    '#000000',
+    '#0099CC',
+    '#868F98',
+    '#009999',
+    '#CC9999',
+    '#66CCCC',
+    '#66CC00',
+    '#FF6600',
+]
 
 class CategoryDataFrame(MetaDataFrame):
     """docstring for CategoryDataFrame"""
@@ -146,21 +71,33 @@ class CategoryDataFrame(MetaDataFrame):
         super(CategoryDataFrame, self).__init__(dfc, df)
     def apply(self):
         for i in self:
+            if not self[i]['active']:
+                continue
+            field = self[i]['field']
             query_dict = json.loads(self[i]['query'])
             for k in query_dict:
-                self.dfc.loc[k, self.dfc.eval(k, query_dict[k]), ['category']] = i
+                if field not in self.dfc[k].columns:
+                    # Inititalize
+                    self.dfc.__getitem__(k,inplace=True)[field] = -1
+                if query_dict[k]:
+                    self.dfc.loc[k, self.dfc.eval(k, query_dict[k]), [field]] = i
+                else:
+                    self.dfc.loc[k, self.dfc.eval(k, 'index'), [field]] = i
     def __setitem__(self, i, v):
         assert isinstance(i, int)
         assert i <= len(self.df)
-        label = v['label']
-        color = v['color']
-        query = v['query']
+        label  = v['label']
+        color  = v['color']
+        field  = v['field']
+        query  = v['query']
+        active = v.get('active', True)
         if isinstance(query, str):
             query_str = query
             query_dict = json.loads(query)
         if isinstance(query, dict):
             query_dict = query
             query_str = json.dumps(query)
+        assert isinstance(active, bool)
         assert isinstance(label, str)
         assert isinstance(color, str)
         assert isinstance(query_dict, dict)
@@ -170,18 +107,23 @@ class CategoryDataFrame(MetaDataFrame):
             assert isinstance(query_dict[k], str)
         super(CategoryDataFrame, self).__setitem__(
             i,
-            {
-                'label' : label,
-                'color' : color,
-                'query' : query_str,
-            },
+            dict(
+                label=label,
+                color=color,
+                field=field,
+                query=query_str,
+                active=active,
+            ),
         )
-    def append(self, label, color, query):
-        super(CategoryDataFrame, self).append({
-            'label' : label,
-            'color' : color,
-            'query' : query,
-        })
+    def append(self, label, color, field, query, active=True):
+        # TODO: RM this function
+        super(CategoryDataFrame, self).append(dict(
+            label=label,
+            color=color,
+            field=field,
+            query=query,
+            active=active,
+        ))
 
 class Image(DataFrameCollection):
     def __init__(self, *args, **kwargs):
@@ -192,43 +134,67 @@ class Image(DataFrameCollection):
     def load(self, path):
         super(Image, self).load(path)
         # Check format
-        for k,v in self.items():
-            shape_class = SHAPE_CLASS[self.shape[k]]
-            for kk in shape_class.shape_fields:
-                assert kk in v.columns
-            for category in np.unique(v['category']):
-                assert category in self.category
+        for k, shape in self.shape.df.iterrows():
+            shape_class = shape['shape_class']
+            assert shape_class in SHAPE_FIELD
+            shape_field = json.loads(shape['shape_field'])
+            for k in shape_field:
+                assert k in self
+                for field in SHAPE_FIELD[shape_class]:
+                    assert field in shape_field[k]
 
-    def build(self, trace, shape=None, category=None):
-        if shape is None:
-            shape = DefaultShapeCollection(trace)
-        else:
+    def build(self, trace, shape=None, category=None, color=None):
+        # TODO: rename build from_trace
+        if shape is not None:
             raise Exception('TODO')
-        assert isinstance(shape, ShapeCollection)
-        # TODO: in parallel
-        for k, v in shape.items():
-            logging.info('Building %s' % k)
-            self[k] = pd.DataFrame(v(trace))
-            self.shape[k] = v.shape_class
-        if category is None:
-            category = DefaultCategory()(self)
-        else:
+        for k,v in trace.items():
+            assert v.index.name == 'timestamp'
+            assert 'cpu' in v.columns
+        for k in trace:
+            self[k] = trace[k]
+        shape = {
+            'shape_class' : 'LineShape',
+            'active' : True,
+            'shape_field' : {k:{
+                'x0':'timestamp',
+                'y0':'cpu',
+                'x1':'timestamp',
+                'y1':'cpu + 0.5',
+                'category':'line0_category',
+            } for k in trace}
+        }
+        self.shape.append(shape)
+        ccolor = itertools.cycle(DEFAULT_COLOR_VALUE)
+        if category is not None:
             raise Exception('TODO')
-        for i, c in category.iterrows():
-            label = c['label']
-            color = c['color']
-            query = c['query']
-            self.category.append(label, color, query)
+        for k in trace:
+            label = k
+            color = next(ccolor)
+            field = 'line0_category'
+            query = json.dumps({k:''})
+            active = True
+            self.category.append(label, color, field, query, active)
 
     def line(self):
-        def df(k):
-            shape_fields = SHAPE_CLASS[self.shape[k]].shape_fields
-            todrop = list(filter(lambda k : k not in shape_fields, self[k].columns))
-            return self[k].drop(columns=todrop)
+        def build(i, line):
+            if not line['active']:
+                return pd.DataFrame()
+            shape_field = json.loads(line['shape_field'])
+            if len(shape_field) == 0:
+                logging.warn(f'shape {i} is empty')
+                return pd.DataFrame()
+            return pd.concat([pd.DataFrame({
+                'x0' : np.array(self.eval(k,shape_field[k]['x0']).values, dtype=float),
+                'x1' : np.array(self.eval(k,shape_field[k]['x1']).values, dtype=float),
+                'y0' : np.array(self.eval(k,shape_field[k]['y0']).values, dtype=float),
+                'y1' : np.array(self.eval(k,shape_field[k]['y1']).values, dtype=float),
+                'category' : np.array(self.eval(k,shape_field[k]['category']).values, dtype=int),
+            }) for k in shape_field])
         self.category.apply()
-        iterator = filter(lambda k: k in self.shape and self.shape[k] == 'LineShape', self)
-        line = pd.concat([df(k) for k in iterator], sort=True)
-        line['category'] = line['category'].astype('category')
+        sel_line = self.shape.df['shape_class'] == 'LineShape'
+        lineshape = self.shape.df[sel_line]
+        line = pd.concat([build(i,r) for i,r in lineshape.iterrows()], sort=True)
+        line.loc[:,['category']] = line['category'].astype('category')
         category = np.unique(line['category'])
         color_map = {c : self.category[c]['color'] for c in category}
         label_map = {c : self.category[c]['label'] for c in category}
