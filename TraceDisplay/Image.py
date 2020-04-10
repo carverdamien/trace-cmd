@@ -152,18 +152,19 @@ class Image(DataFrameCollection):
             assert 'cpu' in v.columns
         for k in trace:
             self[k] = trace[k]
-        shape = {
-            'shape_class' : 'LineShape',
-            'active' : True,
-            'shape_field' : {k:{
-                'x0':'timestamp',
-                'y0':'cpu',
-                'x1':'timestamp',
-                'y1':'cpu + 0.5',
-                'category':'line0_category',
-            } for k in trace}
-        }
-        self.shape.append(shape)
+        for k in trace:
+            shape = {
+                'shape_class' : 'LineShape',
+                'active' : True,
+                'shape_field' : {k:{
+                    'x0':'timestamp',
+                    'y0':'cpu',
+                    'x1':'timestamp',
+                    'y1':'cpu + 0.5',
+                    'category':'line0_category',
+                }}
+            }
+            self.shape.append(shape)
         ccolor = itertools.cycle(DEFAULT_COLOR_VALUE)
         if category is not None:
             raise Exception('TODO')
