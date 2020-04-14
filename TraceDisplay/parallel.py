@@ -193,7 +193,7 @@ class TestParallel(unittest.TestCase):
 				return e, df
 			return foreach()
 		TESTS = itertools.product(
-			[100000, 1000000],
+			[100000, 1000000, 10000000],
 			[10, 100],
 			[10, 100],
 		)
