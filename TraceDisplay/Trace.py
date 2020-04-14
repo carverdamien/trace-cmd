@@ -1,5 +1,5 @@
 from .DataFrameCollection import DataFrameCollection, FileExtensionError
-from .parallel import parallel_thread
+from .parallel import parallel_thread, parallel_process
 import os
 import pandas as pd
 import numpy as np
@@ -39,14 +39,17 @@ class Trace(DataFrameCollection):
         #
         ### Read path ###
         #
-        # TODO: in parallel, per_cpu
         # TODO: improve load distribution.
         #       in parallel, per_offset
         #       use trace.read_event_at(offset).
         #
-        cpu = {}
-        for i in range(nr_cpu(path)):
-            cpu[i] = read_event_of_cpu(path, i)
+        @parallel_process(itertools.product(range(nr_cpu(path))))
+        def foreach(i):
+            return i, read_event_of_cpu(path, i)
+        cpu = {
+            ctx.value[0] : ctx.value[1]
+            for ctx in foreach()
+        }
         #
         ### Prepare concatenation ###
         #
