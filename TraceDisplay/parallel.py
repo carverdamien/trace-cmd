@@ -151,6 +151,74 @@ class TestParallel(unittest.TestCase):
 					self.assertEqual(str(solve_return[j][1][N//2].exception), f'{N//2} == {N}/2')
 				else:
 					self.assertTrue(solve_return[j][1] is None)
+	def test_pandas(self):
+		import itertools
+		import pandas as pd
+		import time, random
+		def timeit(func, args):
+			start = time.time()
+			value = func(*args)
+			end   = time.time()
+			return end-start, value
+		def allocate(SIZE, MAX_PARALLEL, NR_CPU):
+			cpu = {i:{} for i in range(NR_CPU)}
+			cpus = list(cpu.keys())
+			for s in range(SIZE):
+				e = random.randint(0, MAX_PARALLEL)
+				i = random.choice(cpus)
+				cpu[i].setdefault(e,[]).append({
+					'timestamp':s,
+					'var':random.randint(0,100),
+				})
+			problem = cpu, SIZE, MAX_PARALLEL, NR_CPU
+			return problem
+		def solve(problem, mode):
+			cpu, SIZE, MAX_PARALLEL, NR_CPU = problem
+			@mode(itertools.product(range(MAX_PARALLEL)))
+			def foreach(e):
+				df = pd.concat([
+					pd.DataFrame(cpu[i][e])
+					for i in cpu
+					if e in cpu[i]
+				])
+				df.set_index(
+					'timestamp',
+					verify_integrity=True,
+					inplace=True,
+				)
+				df.sort_index(
+					ascending=True,
+					inplace=True,
+				)
+				return e, df
+			return foreach()
+		TESTS = itertools.product(
+			[100000, 1000000, 10000000],
+			[10, 100],
+			[10, 100],
+		)
+		for SIZE, MAX_PARALLEL, NR_CPU in TESTS:
+			logging.info(f'{SIZE} {MAX_PARALLEL} {NR_CPU}')
+			problem = allocate(SIZE, MAX_PARALLEL, NR_CPU)
+			result = {}
+			for mode_name, mode in MODE.items():
+				result[mode_name] = timeit(solve, (problem, mode))
+			for mode_name, r in result.items():
+				took, ctx = r
+				logging.info(f'{mode_name} took {took}')
+			it = iter(list(result.items()))
+			base_k, base_v = next(it)
+			base_took, base_ctx = base_v
+			base_solution = {
+				ctx.value[0] : ctx.value[1]
+				for ctx in base_ctx
+			}
+			for k,v in it:
+				k_took, k_ctx = v
+				for ctx in k_ctx:
+					# print(ctx.value[1].head())
+					# print(base_solution[ctx.value[0]].head())
+					self.assertTrue(ctx.value[1].equals(base_solution[ctx.value[0]]))
 	def test_numpy(self):
 		import itertools
 		import numpy as np

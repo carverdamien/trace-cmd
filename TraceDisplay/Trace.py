@@ -1,7 +1,6 @@
 from .DataFrameCollection import DataFrameCollection, FileExtensionError
-from .parallel import parallel_thread
+from .parallel import parallel_thread, parallel_process
 import os
-import tracecmd
 import pandas as pd
 import numpy as np
 import logging
@@ -30,34 +29,68 @@ class Trace(DataFrameCollection):
     def load(self, path):
         if os.path.splitext(path)[1] == '.h5':
             super(Trace, self).load(path)
-            # TODO: raise exception if DataFrameCollection is not a Trace
+            # TODO: raise exception
+            # if DataFrameCollection is not a Trace
             for k,v in self.items():
                 assert v.index.name == 'timestamp'
             return
         elif os.path.splitext(path)[1] != '.dat':
             raise FileExtensionError(path, '.dat')
-        df = {}
-        trace = tracecmd.Trace(path)
-        # TODO: in parallel
-        for cpu in range(trace.cpus):
-            logging.info('Reading events of cpu %d' % cpu)
-            event = trace.read_event(cpu)
-            while event:
-                event = event_to_dict(event)
-                # TODO: Maybe del event['event']
-                df.setdefault(event['event'],[]).append(event)
-                event = trace.read_event(cpu)
+        #
+        ### Read path ###
+        #
+        # TODO: improve load distribution.
+        #       in parallel, per_offset
+        #       use trace.read_event_at(offset).
+        #
+        @parallel_process(itertools.product(range(nr_cpu(path))))
+        def foreach(i):
+            return i, read_event_of_cpu(path, i)
+        cpu = {
+            ctx.value[0] : ctx.value[1]
+            for ctx in foreach()
+        }
+        #
+        ### Prepare concatenation ###
+        #
+        event_name = []
+        for i in cpu:
+            for e in cpu[i]:
+                if e in event_name:
+                    continue
+                event_name.append(e)
         logging.info('%s contains %d types of events' %
-                     (path, len(df)))
-        # TODO: in parallel
-        for event in df:
-            logging.info('Building DataFrame of event %s' % event)
-            df[event] = pd.DataFrame(df[event])
-            # TODO: check if timestamps are unique
-            # because two cpu can produce the same timestamp
-            df[event].set_index('timestamp', inplace=True)
-            df[event].sort_index(inplace=True, ascending=True)
-        for k,v in df.items():
+                     (path, len(event_name)))
+        #
+        ### Concatenate ###
+        #
+        event = {}
+        for e in event_name:
+            logging.info('Building DataFrame of event %s' % e)
+            # Concatenate
+            # same event across
+            # all cpus
+            df = pd.concat([
+                pd.DataFrame(cpu[i][e])
+                for i in cpu
+                if e in cpu[i]
+            ])
+            # set_index must fail if
+            # timestamps are not unique
+            # TODO: add unittest
+            # TODO: use multi-index if
+            # many timestamps are not unique
+            df.set_index(
+                'timestamp',
+                verify_integrity=True,
+                inplace=True,
+            )
+            df.sort_index(
+                ascending=True,
+                inplace=True,
+            )
+            event[e] = df
+        for k,v in event.items():
             if k in NXTS_X:
                 for X in NXTS_X[k]:
                     v = nxts_X(v, X)
@@ -86,6 +119,25 @@ class Trace(DataFrameCollection):
             timeline = timeline[timeline.index < tmax]
         timeline = timeline.dropna(how='all', axis=1)
         return timeline
+
+def nr_cpu(trace_path):
+    import tracecmd
+    # Lazy import (only Linux)
+    return tracecmd.Trace(trace_path).cpus
+
+def read_event_of_cpu(trace_path, cpu):
+    import tracecmd
+    # Lazy import (only Linux)
+    event = {}
+    trace = tracecmd.Trace(trace_path)
+    logging.info('Reading events of cpu %d' % cpu)
+    e = trace.read_event(cpu)
+    while e:
+        e = event_to_dict(e)
+        # TODO: Maybe del e['event']
+        event.setdefault(e['event'],[]).append(e)
+        e = trace.read_event(cpu)
+    return event
 
 def try_str_except_int(x):
     try:
@@ -145,6 +197,7 @@ def DEFAULT_CAST(t):
     return int
 
 def typeof(key, event):
+    import tracecmd
     return str(tracecmd.tep_format_field_type_get(event[str(key)]._field))
 
 def event_to_dict(event):
