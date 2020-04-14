@@ -74,6 +74,8 @@ def mpl_render(render_path, data_path):
     image.load(data_path)
     # print(image)
     line, color_map, label_map = image.line()
+    if len(line) == 0:
+        raise Exception('TODO: len(line) == 0')
     #print(line)
     xmin = min(min(line['x0']), min(line['x1']))
     xmax = max(max(line['x0']), max(line['x1']))

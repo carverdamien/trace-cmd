@@ -177,13 +177,21 @@ class Image(DataFrameCollection):
             self.category.append(label, color, field, query, active)
 
     def line(self):
+        def empty():
+            return pd.DataFrame({
+                'x0' : [],
+                'x1' : [],
+                'y0' : [],
+                'y1' : [],
+                'category' : [],
+            })
         def build(i, line):
             if not line['active']:
-                return pd.DataFrame()
+                return empty()
             shape_field = json.loads(line['shape_field'])
             if len(shape_field) == 0:
                 logging.warn(f'shape {i} is empty')
-                return pd.DataFrame()
+                return empty()
             return pd.concat([pd.DataFrame({
                 'x0' : np.array(self.eval(k,shape_field[k]['x0']).values, dtype=float),
                 'x1' : np.array(self.eval(k,shape_field[k]['x1']).values, dtype=float),

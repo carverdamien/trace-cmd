@@ -94,6 +94,8 @@ class BokehRenderer(object):
 
     def update_model(self):
         line, color_map, label_map = self.image_model.line()
+        if len(line) == 0:
+            raise Exception('TODO: len(line) == 0')
         xmin = min(min(line['x0']), min(line['x1']))
         xmax = max(max(line['x0']), max(line['x1']))
         ymin = min(min(line['y0']), min(line['y1']))
