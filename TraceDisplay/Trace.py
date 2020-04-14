@@ -90,6 +90,9 @@ class Trace(DataFrameCollection):
                 inplace=True,
             )
             event[e] = df
+        #
+        ### Compute NXTS_X ###
+        #
         for k,v in event.items():
             if k in NXTS_X:
                 for X in NXTS_X[k]:
