@@ -3,6 +3,9 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("pip3.install.txt", "r") as fh:
+    install_requires = [p for p in fh.read().split("\n") if len(p) > 0]
+
 setuptools.setup(
     name="TraceDisplay-DAMIEN-MICHAEL-CARVER",
     version="0.0.1",
@@ -12,6 +15,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/carverdamien/trace-cmd",
+    install_requires=install_requires,
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.7",
