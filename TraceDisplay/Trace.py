@@ -64,8 +64,6 @@ class Trace(DataFrameCollection):
         #
         ### Concatenate ###
         #
-        # TODO: in parallel
-        #
         event = {}
         for e in event_name:
             logging.info('Building DataFrame of event %s' % e)
