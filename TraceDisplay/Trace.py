@@ -196,6 +196,7 @@ def DEFAULT_CAST(t):
     return int
 
 def typeof(key, event):
+    import tracecmd
     return str(tracecmd.tep_format_field_type_get(event[str(key)]._field))
 
 def event_to_dict(event):
