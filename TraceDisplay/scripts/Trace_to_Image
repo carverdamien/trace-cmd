@@ -1,8 +1,7 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3.7
 import logging
 import os
-from TraceDisplay import Trace
-from TraceDisplay import Image
+from TraceDisplay import Trace, Image
 
 def main(image_path, trace_path, shape_paths):
     # TODO: use shape_paths

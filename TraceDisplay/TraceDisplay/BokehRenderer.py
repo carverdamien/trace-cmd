@@ -10,7 +10,7 @@ import datashader as ds
 import datashader.transfer_functions as tf
 import pandas as pd
 import numpy as np
-from ..Image import Image
+from .Image import Image
 import logging
 
 BOKEH_RENDERER = {}
