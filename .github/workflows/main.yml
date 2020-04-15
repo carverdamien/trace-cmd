@@ -57,7 +57,7 @@ jobs:
       - name: Test TraceDisplay
         uses: ./
         with:
-          bash: 'python -m TraceDisplay'
+          bash: 'pytest TraceDisplay'
       - name: Test NoteBook
         uses: ./
         with:
