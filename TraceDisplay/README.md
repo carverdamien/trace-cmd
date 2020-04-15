@@ -12,16 +12,31 @@ The default rules are the following:
 
 Custom rules can also be added (see [jupyter notebook example](./tests/jupyter/TestInteractiveTraceDisplay.ipynb) or [download and open it](./docs/small-sched-trace.notebook.html))
 
+## Install
+
+Use `docker.sh` to build a container image with TraceDisplay installed or follow these instructions.
+
 ```
-# Record something.
+# Install tracecmd
+export PYTHON_VERS=python3
+make
+python setup.py sdist bdist_wheel
+pip install -U dist/tracecmd*.tar.gz
+
+# Install TraceDisplay
+cd TraceDisplay
+python setup.py sdist bdist_wheel
+pip install -U dist/TraceDisplay*.tar.gz
+```
+
+## Quick Usage
+
+```
+# Record something. (e.g. all sched events)
 trace-cmd record -o trace.dat -e sched echo Hello World
 
-# Convert trace.dat into trace.h5
-Trace_to_DataFrames trace.h5 trace.dat
+# Run TraceDisplay with the default rules
+TraceDisplay image.html trace.dat
 
-# Build default image.i.h5
-Trace_to_image image.i.h5 trace.h5
-
-# Render image.html or image.png
-Render_Image image.html image.i.h5
+# open image.html
 ```
