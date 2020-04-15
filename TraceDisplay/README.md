@@ -14,7 +14,10 @@ Custom rules can also be added (see [jupyter notebook example](./tests/jupyter/T
 
 ## Install
 
-Use `docker.sh` to build a container image with TraceDisplay installed or follow these instructions.
+Use `docker.sh` to build a container image with TraceDisplay installed.
+This script will also start a TraceDisplay container that runs a jupyter server.
+
+If you want to install TraceDisplay on your machine follow these instructions:
 
 ```
 # Install tracecmd
