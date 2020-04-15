@@ -16,16 +16,12 @@ ctracecmd = setuptools.Extension(
     ['python/ctracecmd.i'],
     swig_opts=[
         '-Wall',
-        # '-modern', # ???
         '-noproxy',
         '-I./include/traceevent',
         '-I./include/trace-cmd',
     ],
     include_dirs=include_dirs,
     libraries=[
-        './lib/trace-cmd/libtracecmd.a',
-        './lib/tracefs/libtracefs.a',
-        './lib/traceevent/libtraceevent.a',
         'tracecmd',
         'traceevent',
         'tracefs',
