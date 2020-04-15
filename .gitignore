@@ -23,3 +23,6 @@ traceevent_plugin_dir
 trace_python_dir
 tracecmd_plugin_dir
 *.png
+build
+dist
+*.egg-info
