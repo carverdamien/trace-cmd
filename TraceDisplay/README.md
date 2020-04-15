@@ -8,6 +8,8 @@ The default rules are the following:
 * For each event a small vertical segment is drawn at `(x0,y0)` where `x0` is the timestamp at which the event occured and `y0` the cpu on with the event was recorded.
 * Each segment are then colored according to the type of the event.
 
+## Examples
+
 All events of a `echo Hello World` on a 2-core machine rendered with [plotly](https://github.com/plotly/plotly.py):
 ![small-full-trace.png](./docs/small-full-trace.png)
 
