@@ -8,7 +8,10 @@ The default rules are the following:
 * For each event a small vertical segment is drawn at `(x0,y0)` where `x0` is the timestamp at which the event occured and `y0` the cpu on with the event was recorded.
 * Each segment are then colored according to the type of the event.
 
+All events of a `echo Hello World` on a 2-core machine rendered with [plotly](https://github.com/plotly/plotly.py):
 ![small-full-trace.png](./docs/small-full-trace.png)
+
+All sched events of a `hackbench -g 250` on a 160-core machine rendered with [bokeh](https://github.com/bokeh/bokeh):
 ![large-sched-trace.png](./docs/large-sched-trace.png)
 
 Custom rules can also be added (see [jupyter notebook example](./tests/jupyter/TestInteractiveTraceDisplay.ipynb) or [download and open it](./docs/small-sched-trace.notebook.html))
