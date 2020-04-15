@@ -1,10 +1,8 @@
 import unittest, os, re, logging
 import numpy as np
 import pandas as pd
-from .Trace import Trace
-from .Image import Image
-from .Render import mpl_render, plotly_render, bokeh_render
-from .DataFrameCollection import DataFrameCollection
+from TraceDisplay import Trace, Image, DataFrameCollection
+from TraceDisplay import mpl_render, plotly_render, bokeh_render
 
 NR_SCALE = 10
 
@@ -21,7 +19,7 @@ class TestTrace(unittest.TestCase):
     def test_load_and_save(self):
         WALK_PATH = os.environ.get('WALK_PATH', '.')
         count = 0
-        for trace_path in find(WALK_PATH, '.*.dat$'):
+        for trace_path in find(WALK_PATH, '(.*.dat$)|(.*.dat.gz$)'):
             no_ext_path = os.path.splitext(trace_path)[0]
             hdf_path = no_ext_path + '.h5'
             img_path = no_ext_path + '.i.h5'

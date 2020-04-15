@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import logging
 import itertools
+import gzip, shutil
 
 def nxts_X(df, X):
     next_timestamp = np.array(df.index)
@@ -27,6 +28,12 @@ class Trace(DataFrameCollection):
     def __init__(self, *args, **kwargs):
         super(Trace, self).__init__(*args, **kwargs)
     def load(self, path):
+        if os.path.splitext(path)[1] == '.gz':
+            new_path = os.path.splitext(path)[0]
+            with gzip.open(path, 'rb') as f_in:
+                with open(new_path, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            path = new_path
         if os.path.splitext(path)[1] == '.h5':
             super(Trace, self).load(path)
             # TODO: raise exception
