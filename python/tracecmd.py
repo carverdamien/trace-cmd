@@ -20,7 +20,6 @@
 
 from functools import update_wrapper
 from ctracecmd import *
-from UserDict import DictMixin
 
 """
 Python interface to the tracecmd library for parsing ftrace traces
@@ -51,7 +50,7 @@ def cached_property(func, name=None):
         self.__cached_properties.pop(name, None)
     return property(_get, None, _del)
 
-class Event(object, DictMixin):
+class Event(object):
     """
     This class can be used to access event data
     according to an event's record and format.
@@ -73,7 +72,7 @@ class Event(object, DictMixin):
         f = tep_find_field(self._format, n)
         if f is None:
             raise KeyError("no field '%s'" % n)
-        return Field(self._record, f)
+        return Field(n, self._record, f)
 
     def keys(self):
         return py_format_get_keys(self._format)
@@ -132,7 +131,8 @@ class FieldError(Exception):
     pass
 
 class Field(object):
-    def __init__(self, record, field):
+    def __init__(self, name, record, field):
+        self._name = name
         self._record = record
         self._field = field
 
@@ -144,7 +144,11 @@ class Field(object):
         ret, val =  tep_read_number_field(self._field,
                                           tep_record_data_get(self._record))
         if ret:
-            raise FieldError("Not a number field")
+            fmt = tep_format_field_type_get(self._field)
+            print('DEBUG:', self.data)
+            print('DEBUG:', dir(self.data))
+            print('DEBUG:', self.data[0])
+            raise FieldError("Field '%s' is not a number field. It is '%s'" % (self._name, fmt))
         return val
     __int__ = __long__
 
