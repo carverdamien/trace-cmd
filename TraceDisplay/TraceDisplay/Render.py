@@ -1,6 +1,5 @@
-#!/usr/bin/env python2.7
 import numpy as np
-from TraceDisplay import Image
+from .Image import Image
 import logging
 
 def bokeh_render(render_path, data_path):

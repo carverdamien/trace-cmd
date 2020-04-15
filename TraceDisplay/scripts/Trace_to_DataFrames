@@ -1,5 +1,5 @@
-#!/usr/bin/env python2.7
-from Trace import Trace
+#!/usr/bin/env python3.7
+from TraceDisplay import Trace
 import logging
 import os
 
