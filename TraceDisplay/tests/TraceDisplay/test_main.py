@@ -34,9 +34,9 @@ class TestTrace(unittest.TestCase):
             i = Image()
             i.build(t)
             i.save(img_path)
-            mpl_render(mpl_render_path, img_path)
-            plotly_render(plotly_render_path, img_path)
-            bokeh_render(bokeh_render_path, img_path)
+            mpl_render(mpl_render_path, i)
+            plotly_render(plotly_render_path, i)
+            bokeh_render(bokeh_render_path, i)
             count += 1
         self.assertTrue(count>0)
 
