@@ -1,5 +1,5 @@
 #!/usr/bin/env python3.7
-from TraceDisplay import bokeh_render, mpl_render, plotly_render
+from TraceDisplay import Trace, Image, bokeh_render, mpl_render, plotly_render
 import argparse, sys, os, logging
 
 if __name__ == '__main__':
@@ -10,9 +10,9 @@ if __name__ == '__main__':
                         type=str,
                         help="path to render output file",
     )
-    parser.add_argument("image_path",
+    parser.add_argument("input_path",
                         type=str,
-                        help="path to the image input file",
+                        help="path to the image or trace input file",
     )
     parser.add_argument("--force","-f",
                         action="store_true",
@@ -20,8 +20,15 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
-    if os.path.splitext(args.render_path)[1] == '.html':
-        # plotly_render(args.render_path, args.image_path)
-        bokeh_render(args.render_path, args.image_path)
+    image = Image()
+    if os.path.splitext(args.input_path)[1] in ['.dat','.gz']:
+        t = Trace()
+        t.load(args.input_path)
+        image.build(t)
     else:
-        mpl_render(args.render_path, args.image_path)
+        image.load(args.input_path)
+    if os.path.splitext(args.render_path)[1] == '.html':
+        # plotly_render(args.render_path, image)
+        bokeh_render(args.render_path, image)
+    else:
+        mpl_render(args.render_path, image)
