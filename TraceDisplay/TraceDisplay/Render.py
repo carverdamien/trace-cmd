@@ -2,14 +2,12 @@ import numpy as np
 from .Image import Image
 import logging
 
-def bokeh_render(render_path, data_path):
+def bokeh_render(render_path, image):
     from bokeh.document import Document
     from bokeh.embed import file_html
     from bokeh.resources import INLINE
     from TraceDisplay import BokehRenderer
 
-    image = Image()
-    image.load(data_path)
     bkr = BokehRenderer()
     bkr.render(image)
 
@@ -17,17 +15,15 @@ def bokeh_render(render_path, data_path):
     doc.add_root(bkr.root)
     doc.validate()
     with open(render_path, "w") as f:
-        f.write(file_html(doc, INLINE, data_path))
+        f.write(file_html(doc, INLINE, render_path))
     logging.info("Wrote %s" % render_path)
-    return file_html(doc, INLINE, data_path)
+    return file_html(doc, INLINE, render_path)
     pass
 
-def plotly_render(render_path, data_path):
+def plotly_render(render_path, image):
     import plotly.graph_objs as go
     from plotly.offline import plot
 
-    image = Image()
-    image.load(data_path)
     line, color_map, label_map = image.line()
 
     def data(category):
@@ -64,13 +60,11 @@ def plotly_render(render_path, data_path):
     plot(fig, filename=render_path, auto_open=False)
     pass
 
-def mpl_render(render_path, data_path):
+def mpl_render(render_path, image):
     import matplotlib as mpl
     mpl.use('Agg')
     import matplotlib.pyplot as plt
     from matplotlib.collections import LineCollection
-    image = Image()
-    image.load(data_path)
     # print(image)
     line, color_map, label_map = image.line()
     if len(line) == 0:
@@ -88,7 +82,8 @@ def mpl_render(render_path, data_path):
     # print(dpi, ypixels)
     if dpi < ypixels:
         dpi = ypixels
-    assert dpi % ypixels == 0
+    if not dpi % ypixels == 0:
+        logging.warning('TODO')
     # scale = 160.
     # dpi = scale*ypixels
     # dpisqrt = np.sqrt(100./dpi)
@@ -112,28 +107,3 @@ def mpl_render(render_path, data_path):
     ax.set_ylim(ymin, ymax)
     fig.savefig(render_path)
     pass
-
-if __name__ == '__main__':
-    import argparse, sys, os
-    parser = argparse.ArgumentParser(
-        description="Render from image",
-    )
-    parser.add_argument("render_path",
-                        type=str,
-                        help="path to render output file",
-    )
-    parser.add_argument("image_path",
-                        type=str,
-                        help="path to the image input file",
-    )
-    parser.add_argument("--force","-f",
-                        action="store_true",
-                        help="ignore checks. overwrite output file if it already exists",
-    )
-    args = parser.parse_args()
-    logging.basicConfig(level=logging.DEBUG)
-    if os.path.splitext(args.render_path)[1] == '.html':
-        # plotly_render(args.render_path, args.image_path)
-        bokeh_render(args.render_path, args.image_path)
-    else:
-        mpl_render(args.render_path, args.image_path)
