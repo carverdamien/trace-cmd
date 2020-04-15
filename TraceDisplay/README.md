@@ -3,9 +3,10 @@
 TraceDisplay is a visualization tool for trace-cmd records.
 The trace-cmd records are converted into a collection of pandas DataFrame to ease manipulation.
 Rules are then specified and applied to describe how to draw and color shapes from the data.
+
 The default rules are the following:
-For each event a small vertical segment is drawn at `(x0,y0)` where `x0` is the timestamp at which the event occured and `y0` the cpu on with the event was recorded.
-Each segment are then colored according to the type of the event.
+* For each event a small vertical segment is drawn at `(x0,y0)` where `x0` is the timestamp at which the event occured and `y0` the cpu on with the event was recorded.
+* Each segment are then colored according to the type of the event.
 
 ```
 # Record something.
