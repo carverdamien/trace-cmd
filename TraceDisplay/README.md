@@ -23,13 +23,11 @@ If you want to install TraceDisplay on your machine follow these instructions:
 # Install tracecmd
 export PYTHON_VERS=python3
 make
-python setup.py sdist bdist_wheel
-pip install -U dist/tracecmd*.tar.gz
+python setup.py install
 
 # Install TraceDisplay
 cd TraceDisplay
-python setup.py sdist bdist_wheel
-pip install -U dist/TraceDisplay*.tar.gz
+python setup.py install
 ```
 
 ## Quick Usage
