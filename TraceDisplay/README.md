@@ -10,7 +10,7 @@ The default rules are the following:
 
 ![small-full-trace.png](./docs/small-full-trace.png)
 
-Custom rules can also be added (see [jupyter notebook example](./docs/small-sched-trace.notebook.html))
+Custom rules can also be added (see [jupyter notebook example](./tests/jupyter/TestInteractiveTraceDisplay.ipynb) or [download and open it](./docs/small-sched-trace.notebook.html))
 
 ```
 # Record something.
