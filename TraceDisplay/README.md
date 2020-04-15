@@ -9,6 +9,7 @@ The default rules are the following:
 * Each segment are then colored according to the type of the event.
 
 ![small-full-trace.png](./docs/small-full-trace.png)
+![large-sched-trace.png](./docs/large-sched-trace.png)
 
 Custom rules can also be added (see [jupyter notebook example](./tests/jupyter/TestInteractiveTraceDisplay.ipynb) or [download and open it](./docs/small-sched-trace.notebook.html))
 
