@@ -25,3 +25,6 @@ tracecmd_plugin_dir
 *.png
 *.key
 *.pem
+build
+dist
+*.egg-info
